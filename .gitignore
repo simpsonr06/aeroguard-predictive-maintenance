@@ -44,3 +44,20 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+# Secrets & Environment
+.env
+.env.*
+!.env.example
+
+# Nuxt & Node Build Outputs
+node_modules/
+.output/
+.nuxt/
+.nitro/
+.cache/
+
+# Test & Tool Artifacts
+.playwright-mcp/
+*.log
+logs/

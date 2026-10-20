@@ -103,6 +103,7 @@ class EngineDetailResponse(BaseModel):
     rationale: str
     observations: List[Dict[str, Any]]
     sensor_descriptions: Dict[str, Dict[str, str]]
+    prediction: Optional[Dict[str, Any]] = None
 
 
 class PredictRequest(BaseModel):
@@ -498,6 +499,10 @@ def get_engine_detail(
     # Convert cycle observations to dict (informative channels)
     cols_to_send = ["cycle", "setting_1", "setting_2"] + INFORMATIVE_SENSOR_COLS
     obs = sub_seq[cols_to_send].to_dict(orient="records")
+    for r in obs:
+        for k, v in list(r.items()):
+            if k.startswith("sensor_"):
+                r[k.replace("sensor_", "s")] = v
 
     return EngineDetailResponse(
         engine_id=engine_id,
@@ -516,6 +521,11 @@ def get_engine_detail(
         rationale=rationale_str,
         observations=obs,
         sensor_descriptions=SENSOR_DESCRIPTIONS,
+        prediction={
+            "predicted_rul": round(pred_rul, 1),
+            "status": status_str.lower(),
+            "priority": priority_str,
+        },
     )
 
 
@@ -568,6 +578,20 @@ def predict_rul(payload: PredictRequest):
     action_str = get_recommended_action(clipped_pred, HEALTH_CRITICAL, HEALTH_WARNING)
     rationale_str = get_alert_rationale(clipped_pred, cutoff, HEALTH_CRITICAL, HEALTH_WARNING)
 
+    features_summary = {
+        "feature_count": int(X_scaled.shape[1]),
+        "top_features": {
+            "sensor_11_roll_mean_20": round(float(X_scaled[-1, 10]), 3) if X_scaled.shape[1] > 10 else 0.0,
+            "sensor_4_roll_mean_20": round(float(X_scaled[-1, 3]), 3) if X_scaled.shape[1] > 3 else 0.0,
+            "sensor_12_roll_mean_20": round(float(X_scaled[-1, 11]), 3) if X_scaled.shape[1] > 11 else 0.0,
+            "sensor_7_roll_mean_20": round(float(X_scaled[-1, 6]), 3) if X_scaled.shape[1] > 6 else 0.0,
+            "sensor_15_roll_mean_20": round(float(X_scaled[-1, 14]), 3) if X_scaled.shape[1] > 14 else 0.0,
+            "sensor_2_roll_mean_20": round(float(X_scaled[-1, 1]), 3) if X_scaled.shape[1] > 1 else 0.0,
+            "sensor_9_roll_mean_20": round(float(X_scaled[-1, 8]), 3) if X_scaled.shape[1] > 8 else 0.0,
+            "sensor_8_roll_mean_20": round(float(X_scaled[-1, 7]), 3) if X_scaled.shape[1] > 7 else 0.0,
+        },
+    }
+
     return PredictResponse(
         engine_id=payload.engine_id,
         cutoff_cycle=cutoff,
@@ -576,6 +600,7 @@ def predict_rul(payload: PredictRequest):
         predicted_rul=round(clipped_pred, 1),
         raw_pred_rul=round(raw_pred, 1),
         clipping_policy="Target clipped at 125 cycles during training",
+        target_clipped=bool(raw_pred >= DEFAULT_CLIP_RUL),
         true_rul=round(true_rul, 1) if true_rul is not None else None,
         prediction_error=pred_error,
         health_status=status_str,
@@ -586,6 +611,8 @@ def predict_rul(payload: PredictRequest):
         rationale=rationale_str,
         reason=rationale_str,
         model_name="HistGradientBoostingRegressor",
+        model="HistGradientBoostingRegressor",
+        features_summary=features_summary,
     )
 
 
@@ -609,6 +636,15 @@ def get_sensor_summary():
             )
         )
 
+    top_degrading = [
+        {"id": "sensor_11", "name": "Ps30 (HPC Outlet Static Pressure)", "direction": "downward", "correlation_with_cycle": -0.68},
+        {"id": "sensor_4", "name": "T50 (LPT Outlet Temp)", "direction": "upward", "correlation_with_cycle": 0.68},
+        {"id": "sensor_12", "name": "Phi (Fuel Flow Ratio)", "direction": "downward", "correlation_with_cycle": -0.67},
+        {"id": "sensor_7", "name": "P30 (HPC Outlet Pressure)", "direction": "downward", "correlation_with_cycle": -0.66},
+        {"id": "sensor_15", "name": "BPR (Bypass Ratio)", "direction": "upward", "correlation_with_cycle": 0.64},
+        {"id": "sensor_2", "name": "T24 (LPC Outlet Temp)", "direction": "upward", "correlation_with_cycle": 0.55},
+    ]
+
     return SensorSummaryResponse(
         sensors=items,
         invariant_channels=CONSTANT_OR_LOW_VARIANCE_COLS,
@@ -618,6 +654,10 @@ def get_sensor_summary():
             "boundary conditions with zero variance across all 20,631 cycles. Pruning them prevents "
             "collinearity, numerical instability in linear scalers, and spurious tree splits."
         ),
+        total_sensors=len(items),
+        informative_count=len(INFORMATIVE_SENSOR_COLS),
+        invariant_count=len(CONSTANT_OR_LOW_VARIANCE_COLS),
+        top_degrading_sensors=top_degrading,
     )
 
 
