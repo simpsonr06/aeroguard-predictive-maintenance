@@ -1,0 +1,56 @@
+# ==============================================================================
+# AeroGuard 2.0 / 2.1 — Multi-Service Docker Compose Specification
+# ==============================================================================
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    container_name: aeroguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src
+      - PORT=8000
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - aeroguard-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    container_name: aeroguard-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Browser clients query backend through the host-mapped port 8000
+      - NUXT_PUBLIC_API_BASE=http://localhost:8000
+      # Internal Nitro server SSR calls route through the container network
+      - BACKEND_URL=http://backend:8000
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - aeroguard-network
+
+networks:
+  aeroguard-network:
+    driver: bridge

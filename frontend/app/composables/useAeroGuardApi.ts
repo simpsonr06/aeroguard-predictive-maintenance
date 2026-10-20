@@ -47,6 +47,10 @@ export function useAeroGuardApi() {
         `/api/maintenance/queue?warning_threshold=${warningThreshold}&critical_threshold=${criticalThreshold}&status=${status}`
       ),
     getExportUrl: (warningThreshold = 45, criticalThreshold = 20, status = 'all') =>
-      `${apiBase}/api/maintenance/export?warning_threshold=${warningThreshold}&critical_threshold=${criticalThreshold}&status=${status}`
+      `${apiBase}/api/maintenance/export?warning_threshold=${warningThreshold}&critical_threshold=${criticalThreshold}&status=${status}`,
+    getMetrics: () => fetchApi<any>('/api/metrics'),
+    getDrift: (ksAlpha = 0.01, psiWarning = 0.10, psiDrift = 0.25) =>
+      fetchApi<any>(`/api/drift?ks_alpha=${ksAlpha}&psi_warning=${psiWarning}&psi_drift=${psiDrift}`),
+    getLineage: () => fetchApi<any>('/api/models/lineage')
   }
 }

@@ -8,6 +8,16 @@ const { data: modelData, status, error, refresh } = await useAsyncData<ModelMetr
   () => api.getModelMetrics()
 )
 
+const { data: driftData } = await useAsyncData(
+  'model-drift',
+  () => api.getDrift()
+)
+
+const { data: lineageData } = await useAsyncData(
+  'model-lineage',
+  () => api.getLineage()
+)
+
 const activeRegime = ref<'official_test' | 'cutoff_cv' | 'full_trajectory' | 'failure_point'>('official_test')
 
 const resetRegime = () => {
@@ -286,6 +296,141 @@ const narrativeText = computed(() => {
               </tr>
             </tbody>
           </table>
+        </div>
+      </UCard>
+
+      <!-- Stage 3: Statistical Covariate Drift Monitoring -->
+      <UCard v-if="driftData" class="border border-slate-800 bg-slate-900/60 mb-6">
+        <template #header>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-activity" class="size-4 text-teal-400" />
+                <h3 class="text-sm font-semibold text-slate-100">
+                  Covariate Distribution Drift & Stability
+                </h3>
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono"
+                     :class="driftData.overall_status === 'stable' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/80' : driftData.overall_status === 'warning' ? 'bg-amber-950/80 text-amber-300 border border-amber-800/80' : 'bg-rose-950/80 text-rose-300 border border-rose-800/80'">
+                  <span class="size-1.5 rounded-full" :class="driftData.overall_status === 'stable' ? 'bg-emerald-400' : driftData.overall_status === 'warning' ? 'bg-amber-400' : 'bg-rose-400'"></span>
+                  <span>{{ driftData.overall_status === 'stable' ? 'Distribution Stable' : driftData.overall_status === 'warning' ? 'Moderate Shift' : 'Drift Alert' }}</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Reference: <span class="text-slate-200 font-mono">{{ driftData.reference_dataset }} (N={{ driftData.sample_size_reference }})</span>
+                &bull; Comparison: <span class="text-slate-200 font-mono">{{ driftData.comparison_dataset }} (N={{ driftData.sample_size_comparison }})</span>
+              </p>
+            </div>
+            <div class="text-[11px] font-mono text-slate-400">
+              Evaluated: {{ new Date(driftData.measurement_time).toLocaleTimeString() }}
+            </div>
+          </div>
+        </template>
+
+        <!-- Operational Drift Disclaimer -->
+        <div class="mb-4 p-3 rounded bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300">
+          <p class="leading-relaxed">
+            <strong class="text-teal-300">Covariate Shift P(X) vs Model Degradation P(Y|X):</strong>
+            {{ driftData.caveat }}
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-medium text-[11px]">
+                <th class="py-2 px-3">Monitored Sensor</th>
+                <th class="py-2 px-3 font-mono">Ref Mean &plusmn; Std</th>
+                <th class="py-2 px-3 font-mono">Current Mean &plusmn; Std</th>
+                <th class="py-2 px-3 font-mono">Norm Shift (&Delta;&mu;/&sigma;)</th>
+                <th class="py-2 px-3 font-mono">KS Statistic</th>
+                <th class="py-2 px-3 font-mono">PSI Score</th>
+                <th class="py-2 px-3">Stability Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-mono tabular-nums">
+              <tr v-for="(metric, sensorId) in driftData.features" :key="sensorId" class="hover:bg-slate-800/30">
+                <td class="py-2.5 px-3 font-sans font-medium text-slate-200">
+                  {{ sensorId.replace('sensor_', 'Sensor ') }}
+                </td>
+                <td class="py-2.5 px-3 text-slate-400">
+                  {{ metric.ref_mean }} &plusmn; {{ metric.ref_std }}
+                </td>
+                <td class="py-2.5 px-3 text-slate-300">
+                  {{ metric.cur_mean }} &plusmn; {{ metric.cur_std }}
+                </td>
+                <td class="py-2.5 px-3" :class="Math.abs(metric.norm_mean_shift) > 0.5 ? 'text-amber-400 font-bold' : 'text-slate-300'">
+                  {{ metric.norm_mean_shift > 0 ? '+' : '' }}{{ metric.norm_mean_shift }}
+                </td>
+                <td class="py-2.5 px-3 text-slate-300">
+                  {{ metric.ks_statistic }} (p={{ metric.ks_pvalue }})
+                </td>
+                <td class="py-2.5 px-3 font-bold" :class="metric.psi >= 0.25 ? 'text-rose-400' : metric.psi >= 0.10 ? 'text-amber-400' : 'text-emerald-400'">
+                  {{ metric.psi }}
+                </td>
+                <td class="py-2.5 px-3 font-sans">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="size-1.5 rounded-full"
+                          :class="metric.status === 'stable' ? 'bg-emerald-400' : metric.status === 'warning' ? 'bg-amber-400' : 'bg-rose-400'"></span>
+                    <span class="text-[11px] capitalize text-slate-300">{{ metric.status.replace('_', ' ') }}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </UCard>
+
+      <!-- Stage 5: Cryptographic Model Lineage Manifest -->
+      <UCard v-if="lineageData" class="border border-slate-800 bg-slate-900/60 mb-6">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-git-branch" class="size-4 text-teal-400" />
+              <div>
+                <h3 class="text-sm font-semibold text-slate-100">
+                  Cryptographic Model Lineage & Provenance Manifest
+                </h3>
+                <p class="text-xs text-slate-400">
+                  Artifact SHA-256 validation &bull; Manifest Version <span class="font-mono text-teal-300">{{ lineageData.manifest_version }}</span>
+                </p>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-slate-400">ID: {{ lineageData.model_id }}</span>
+          </div>
+        </template>
+
+        <div class="space-y-4 text-xs">
+          <!-- MLflow Trade-off Evaluation Callout -->
+          <div class="p-3 rounded bg-slate-950/80 border border-slate-800 text-slate-300 leading-relaxed">
+            <span class="font-semibold text-teal-300 block mb-1">Architecture Decision — Offline Cryptographic Manifest vs MLflow:</span>
+            {{ lineageData.mlflow_evaluation }}
+          </div>
+
+          <!-- Artifact Hashes Grid -->
+          <div>
+            <span class="font-semibold text-slate-200 block mb-2 uppercase text-[11px] tracking-wider">
+              Immutable Artifact Cryptographic Hashes (SHA-256)
+            </span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-[11px]">
+              <div v-for="(hash, name) in lineageData.artifacts_sha256" :key="name" class="p-2 rounded bg-slate-950 border border-slate-800/80">
+                <div class="text-slate-400">{{ name }}</div>
+                <div class="text-teal-300 truncate" :title="hash">{{ hash }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dataset Hashes Grid -->
+          <div>
+            <span class="font-semibold text-slate-200 block mb-2 uppercase text-[11px] tracking-wider">
+              Source Benchmark Datasets (SHA-256)
+            </span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 font-mono text-[11px]">
+              <div v-for="(hash, name) in lineageData.datasets_sha256" :key="name" class="p-2 rounded bg-slate-950 border border-slate-800/80">
+                <div class="text-slate-400">{{ name }}</div>
+                <div class="text-slate-300 truncate" :title="hash">{{ hash }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </UCard>
 

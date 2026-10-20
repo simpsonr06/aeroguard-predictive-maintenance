@@ -1,0 +1,38 @@
+# Git & System
+.git/
+.gitignore
+.dockerignore
+.DS_Store
+Thumbs.db
+
+# Python & Virtual Environments
+.venv/
+env/
+venv/
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node & Nuxt Build Artifacts
+frontend/node_modules/
+frontend/.output/
+frontend/.nuxt/
+frontend/.nitro/
+frontend/.cache/
+node_modules/
+.output/
+.nuxt/
+
+# Logs & Test Output
+*.log
+logs/
+.playwright-mcp/
+reports/figures/screenshots/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example

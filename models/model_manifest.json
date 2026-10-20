@@ -1,0 +1,56 @@
+{
+  "manifest_version": "2.1.0",
+  "model_id": "histgradientboosting-fd001-v2.1",
+  "algorithm": "HistGradientBoostingRegressor",
+  "library_versions": {
+    "scikit-learn": "1.4+",
+    "joblib": "1.4+",
+    "pandas": "2.2+",
+    "numpy": "1.26+"
+  },
+  "target_policy": {
+    "policy": "Piecewise Linear Run-to-Failure (Capped Early Lifetime)",
+    "clip_threshold_cycles": 125,
+    "rationale": "Turbofan wear is physically undetectable during early cruise cycles. Capping the target at 125 cycles concentrates loss minimization on the active maintenance decision window without distorting gradient steps."
+  },
+  "feature_pipeline": {
+    "architecture": "Temporal Causal Rolling Windows + First-Cycle Baseline Drift",
+    "cross_engine_leakage_safety": "Strict GroupBy(engine_id)",
+    "rolling_windows": [
+      5,
+      15
+    ],
+    "lag_differences": [
+      1,
+      5
+    ],
+    "informative_sensors_count": 14,
+    "pruned_invariant_sensors_count": 7,
+    "total_engineered_features": 122
+  },
+  "evaluation_regimes": {
+    "official_test_rmse": 13.01,
+    "official_test_mae": 10.4,
+    "official_test_r2": 0.888,
+    "official_nasa_score_total": 302.0,
+    "official_nasa_score_per_engine": 3.02,
+    "cross_validation_rmse_mean": 16.2,
+    "test_engines_count": 100,
+    "train_engines_count": 100
+  },
+  "artifacts_sha256": {
+    "best_model_joblib": "a706de88a2424250193fafda1f8ed70e5f67aa8c4b07480dfbd04ca156c272a6",
+    "preprocessor_joblib": "516d95c4e950ec0821c47bcd93959963d8631a47a853615d382b19475f54c1d4",
+    "histgradientboosting_joblib": "a706de88a2424250193fafda1f8ed70e5f67aa8c4b07480dfbd04ca156c272a6",
+    "random_forest_joblib": "82f8ab701685c91720b1b67f406684892a569b44bcafb98a4f617465006f6d51",
+    "model_registry_json": "88f5a794d491d3b07dbbbd3d9f8d4586e8ef24016b8eb596fc6577fadfb2ba39"
+  },
+  "datasets_sha256": {
+    "train_FD001": "963b5e22825b34d8b21c69e1aeb4af3e647050eb672ee8834ba4b5d91d2de0f8",
+    "test_FD001": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851",
+    "RUL_FD001": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca"
+  },
+  "mlflow_evaluation": "MLflow was evaluated as an artifact tracking option. For this self-contained NASA C-MAPSS benchmark research prototype, introducing MLflow would add heavy dependencies (sqlite/psycopg2, alembic, greenlet, sqlalchemy, cloudpickle, databricks-sdk), a separate tracking server, and container bloat without runtime benefit. An immutable, cryptographic JSON manifest with SHA-256 checksums provides 100% auditable, deterministic, zero-overhead lineage that runs entirely offline and container-native.",
+  "generated_at": "2026-10-20T18:54:02.962468+00:00",
+  "git_commit_baseline": "e99b497"
+}

@@ -27,6 +27,9 @@ from aircraft_pm.config import (
 )
 from aircraft_pm.data import load_test_data, load_train_data
 from aircraft_pm.features import CMAPSSPreprocessor
+from aircraft_pm.drift import evaluate_feature_drift
+from aircraft_pm.lineage import get_model_lineage_manifest
+from aircraft_pm.observability import ObservabilityMiddleware, metrics_collector
 from aircraft_pm.operations import (
     build_maintenance_queue,
     classify_health_status,
@@ -227,9 +230,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AeroGuard Prognostics API",
     description="High-performance backend serving NASA C-MAPSS FD001 predictive maintenance models.",
-    version="2.0.0",
+    version="2.1.0",
     lifespan=lifespan,
 )
+
+# Observability middleware for latency profiling and structured logging
+app.add_middleware(ObservabilityMiddleware)
 
 # Narrow CORS configuration for local frontend development
 app.add_middleware(
@@ -252,9 +258,9 @@ app.add_middleware(
 @app.get("/api/health", response_model=HealthResponse)
 def get_health():
     """Verify application readiness, dataset availability, and loaded model artifacts."""
-    model_loaded = app_state["prod_model"] is not None
-    prep_loaded = app_state["preprocessor"] is not None
-    data_loaded = app_state["test_df"] is not None
+    model_loaded = app_state.get("prod_model") is not None
+    prep_loaded = app_state.get("preprocessor") is not None
+    data_loaded = app_state.get("test_df") is not None
 
     if not (model_loaded and prep_loaded and data_loaded):
         raise HTTPException(
@@ -776,3 +782,46 @@ def export_maintenance_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# -------------------------------------------------------------
+# OBSERVABILITY, DRIFT, AND LINEAGE ENDPOINTS
+# -------------------------------------------------------------
+@app.get("/api/metrics")
+def get_system_metrics():
+    """Retrieve operational request counts, error rates, and latency distributions."""
+    return metrics_collector.get_snapshot()
+
+
+@app.get("/api/drift")
+def get_sensor_drift(
+    ks_alpha: float = Query(0.01, ge=0.001, le=0.1),
+    psi_warning: float = Query(0.10, ge=0.01, le=0.5),
+    psi_drift: float = Query(0.25, ge=0.10, le=1.0),
+):
+    """Evaluate non-parametric covariate distribution drift between FD001 train and test benchmark data."""
+    if "drift_report" not in app_state:
+        train_df = app_state.get("train_df")
+        test_df = app_state.get("test_df")
+
+        if train_df is None or test_df is None:
+            train_df, _ = load_train_data()
+            test_df, _, _ = load_test_data()
+
+        app_state["drift_report"] = evaluate_feature_drift(
+            reference_df=train_df,
+            current_df=test_df,
+            reference_name="NASA C-MAPSS FD001 Train (100 Engines, 20,631 Cycles)",
+            comparison_name="NASA C-MAPSS FD001 Test (100 Engines, 13,096 Cycles)",
+            ks_alpha=ks_alpha,
+            psi_warning_thresh=psi_warning,
+            psi_drift_thresh=psi_drift,
+        )
+
+    return app_state["drift_report"]
+
+
+@app.get("/api/models/lineage")
+def get_model_lineage():
+    """Retrieve cryptographic model lineage manifest, artifact SHA-256 hashes, and training parameters."""
+    return get_model_lineage_manifest()

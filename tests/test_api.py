@@ -141,3 +141,42 @@ def test_api_maintenance_queue_and_export(client):
     assert exp_resp.headers["content-type"].startswith("text/csv")
     csv_text = exp_resp.text
     assert "Engine_ID,Current_Cycle,Predicted_RUL_Cycles" in csv_text
+
+
+def test_api_metrics_endpoint(client):
+    """Verify /api/metrics exposes structured request telemetry, latency percentiles, and error rate."""
+    response = client.get("/api/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "aeroguard-backend"
+    assert "requests_total" in data
+    assert "latency_ms" in data
+    assert "p95" in data["latency_ms"]
+    assert "error_rate_pct" in data
+
+
+def test_api_drift_endpoint(client):
+    """Verify /api/drift computes KS and PSI distribution shifts across informative channels."""
+    response = client.get("/api/drift")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "features" in data
+    assert "statistical_methods" in data
+    assert "caveat" in data
+    assert data["sample_size_reference"] > 0
+    assert data["sample_size_comparison"] > 0
+
+
+def test_api_models_lineage_endpoint(client):
+    """Verify /api/models/lineage returns cryptographic manifest with SHA-256 artifact hashes."""
+    response = client.get("/api/models/lineage")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["manifest_version"] == "2.1.0"
+    assert data["algorithm"] == "HistGradientBoostingRegressor"
+    assert "artifacts_sha256" in data
+    assert "best_model_joblib" in data["artifacts_sha256"]
+    assert len(data["artifacts_sha256"]["best_model_joblib"]) == 64
+    assert "datasets_sha256" in data
+    assert "train_FD001" in data["datasets_sha256"]
