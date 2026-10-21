@@ -5,11 +5,13 @@ import pandas as pd
 import pytest
 
 from aircraft_pm.attacks import (
+    calculate_hazardous_prediction_rate,
     compute_baseline_sensor_stats,
     inject_sensor_bias,
     inject_sensor_ramp,
     inject_sensor_replay,
 )
+
 
 
 @pytest.fixture
@@ -157,3 +159,44 @@ def test_invalid_fraction_validation(sample_telemetry_df: pd.DataFrame):
 
     with pytest.raises(ValueError, match="onset_fraction"):
         inject_sensor_ramp(sample_telemetry_df, ["sensor_11"], {"sensor_11": 1.0}, stats, onset_fraction=1.5)
+
+
+def test_hazardous_prediction_rate_canonical_calculation():
+    """Verify HPR calculation on mixed critical and non-critical sets."""
+    # 4 engines:
+    # Engine 1: true=10 (crit), pred=30 (falsely healthy -> hazardous!)
+    # Engine 2: true=20 (crit), pred=15 (crit -> safe)
+    # Engine 3: true=25 (crit boundary), pred=25 (crit boundary -> safe)
+    # Engine 4: true=60 (non-crit), pred=80 (safe non-crit)
+    y_true = [10.0, 20.0, 25.0, 60.0]
+    y_pred = [30.0, 15.0, 25.0, 80.0]
+
+    res = calculate_hazardous_prediction_rate(y_true, y_pred, critical_threshold=25.0)
+    assert res["critical_count"] == 3
+    assert res["hazardous_count"] == 1
+    assert res["hpr_pct"] == pytest.approx(33.33, rel=1e-2)
+
+
+def test_hazardous_prediction_rate_boundary_conditions():
+    """Verify HPR handling of boundary conditions: exactly 25.0 vs 25.01."""
+    # true RUL = 25.0
+    y_true = [25.0, 25.0]
+    # pred 25.0 is NOT hazardous; pred 25.01 IS hazardous
+    y_pred = [25.0, 25.01]
+
+    res = calculate_hazardous_prediction_rate(y_true, y_pred, critical_threshold=25.0)
+    assert res["critical_count"] == 2
+    assert res["hazardous_count"] == 1
+    assert res["hpr_pct"] == 50.0
+
+
+def test_hazardous_prediction_rate_zero_critical_denominator():
+    """When no engines are critical (e.g. early cruise flight), HPR must safely return 0.0%."""
+    y_true = [80.0, 90.0, 100.0]
+    y_pred = [70.0, 85.0, 95.0]
+
+    res = calculate_hazardous_prediction_rate(y_true, y_pred, critical_threshold=25.0)
+    assert res["critical_count"] == 0
+    assert res["hazardous_count"] == 0
+    assert res["hpr_pct"] == 0.0
+

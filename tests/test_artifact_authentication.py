@@ -241,3 +241,53 @@ def test_dev_mode_fallback_behavior(mock_models_dir: Path):
             public_key_hex=AEROSENTINEL_ED25519_PUBLIC_KEY,
             require_signature=False,
         )
+
+
+def test_malformed_manifest_json_rejected(mock_models_dir: Path):
+    """Corrupted/non-JSON manifest files trigger fail-closed rejection without loading."""
+    manifest_path = mock_models_dir / "model_manifest.json"
+    manifest_path.write_text("{this is corrupted: invalid json syntax", encoding="utf-8")
+
+    with patch("joblib.load") as mock_load:
+        with pytest.raises(ArtifactSecurityError, match="Malformed model manifest JSON"):
+            load_verified_model_pipeline(
+                models_dir=mock_models_dir,
+                public_key_hex=AEROSENTINEL_ED25519_PUBLIC_KEY,
+                require_signature=True,
+            )
+        mock_load.assert_not_called()
+
+
+def test_trust_key_mismatch_rejected(mock_models_dir: Path):
+    """Validly signed manifest verified against an untrusted/different public key fails closed."""
+    _, untrusted_pub = generate_ed25519_keypair()
+
+    with patch("joblib.load") as mock_load:
+        with pytest.raises(ArtifactSecurityError, match="signature invalid for canonical manifest content"):
+            load_verified_model_pipeline(
+                models_dir=mock_models_dir,
+                public_key_hex=untrusted_pub,
+                require_signature=True,
+            )
+        mock_load.assert_not_called()
+
+
+def test_unsupported_signature_algorithm_rejected(mock_models_dir: Path):
+    """Manifest specifying unsupported algorithm (e.g. RSA or DSA) is rejected."""
+    manifest_path = mock_models_dir / "model_manifest.json"
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    manifest["signature"]["algorithm"] = "RSA-PSS-SHA256"
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+
+    with patch("joblib.load") as mock_load:
+        with pytest.raises(ArtifactSecurityError, match="Unsupported signature algorithm: RSA-PSS-SHA256"):
+            load_verified_model_pipeline(
+                models_dir=mock_models_dir,
+                public_key_hex=AEROSENTINEL_ED25519_PUBLIC_KEY,
+                require_signature=True,
+            )
+        mock_load.assert_not_called()
+

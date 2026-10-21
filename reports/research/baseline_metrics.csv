@@ -1,0 +1,3 @@
+protocol_id,protocol_name,target_definition,clip_threshold_cycles,rmse,mae,r2,nasa_score_total,nasa_score_per_engine,critical_engines_count,hazardous_engines_count,hazardous_prediction_rate_pct,test_engines_count
+protocol_a_unclipped,Raw Unclipped Official Test Labels,Unmodified RUL_FD001.txt ground truth at terminal cycle,None,13.9044,10.4044,0.888,301.97,3.02,19,3,15.79,100
+protocol_b_clipped_125,Piecewise Target Clipped at 125 Cycles,"min(RUL, 125) ground truth at terminal cycle",125,13.0082,9.3344,0.8946,280.35,2.8,19,3,15.79,100

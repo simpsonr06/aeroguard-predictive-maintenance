@@ -1,14 +1,26 @@
-# AeroGuard: Aircraft Turbofan Predictive Maintenance & Prognostics System
+# AeroSentinel / AeroGuard: Integrity-Assured Machine Learning for Aircraft Predictive Maintenance
 
 [![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.9.1-F7931E?style=flat&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.66.0-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Tests Passing](https://img.shields.io/badge/Tests-32%2F32%20Passing-10B981?style=flat&logo=pytest&logoColor=white)](tests/)
-[![Design System](https://img.shields.io/badge/Design%20System-Yafa--UI-0891B2?style=flat)](.agents/skills/yafa-ui-dashboard/SKILL.md)
+[![Ed25519 Authenticated](https://img.shields.io/badge/Integrity-Ed25519%20Signed-059669?style=flat&logo=shield)](docs/research/security_model.md)
+[![Tests Passing](https://img.shields.io/badge/Tests-75%2F75%20Passing-10B981?style=flat&logo=pytest&logoColor=white)](tests/)
+[![Nuxt 3 Frontend](https://img.shields.io/badge/Frontend-Nuxt%203%20%2F%20Tailwind-00DC82?style=flat&logo=nuxt.js)](frontend/)
 [![Dataset](https://img.shields.io/badge/Dataset-NASA%20C--MAPSS%20FD001-0284C7?style=flat)](data/raw/)
-[![Zero Leakage](https://img.shields.io/badge/Validation-Zero%20Data%20Leakage-10B981?style=flat)](src/aircraft_pm/features.py)
+[![Publication Target](https://img.shields.io/badge/Target-IJSART%20Draft-6366F1?style=flat)](docs/research/manuscript_aerosentinel_draft.md)
 
-A production-grade, mathematically verified predictive maintenance and fleet prognostic system built on the **NASA C-MAPSS FD001** (Commercial Modular Aero-Propulsion System Simulation) benchmark.
+An end-to-end research and engineering framework examining **integrity controls, cryptographic supply-chain authentication, and sensor-manipulation resilience** in turbofan remaining-useful-life (RUL) predictive maintenance pipelines using the **NASA C-MAPSS FD001** benchmark.
+
+---
+
+## 🔬 Research & Security Documentation
+- [Research Specification & Threat Model](docs/research/research_specification.md) — Problem formulation, RQs, and STRIDE analysis.
+- [Experimental Methodology](docs/research/methodology.md) — Feature pipeline, dual evaluation protocols, and drift metrics.
+- [Security Model & Cryptographic Verification](docs/research/security_model.md) — Ed25519 signing, canonical JSON, and API hardening.
+- [Scientific Limitations & Aviation Disclaimers](docs/research/limitations.md) — Operational boundaries and synthetic data scope.
+- [Experiment Reproduction Guide](docs/research/experiment_reproduction.md) — Reproduction commands and benchmark procedures.
+- [Literature Review & Verified Matrix](docs/research/literature_review.md) — 13 peer-reviewed citations across 6 research pillars.
+- [Verified Experimental Results](docs/research/experiment_results.md) — Dual baseline, attack outcomes, and latency benchmarks.
+- [IJSART Formatting & Submission Checklist](docs/research/ijsart_formatting_checklist.md) — Verified journal formatting rules.
 
 ---
 

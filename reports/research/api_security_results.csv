@@ -1,0 +1,13 @@
+case_id,interface,test_description,response_code,test_status,hardening_mechanism
+SEC-01,GET /api/security/status,Authenticated pipeline parameter verification,200 OK,PASS,Verified signature info and public key parameters
+SEC-02,GET /api/security/attack-simulation,Research simulation artifact retrieval,200 OK,PASS,Delivers verified simulation summary
+SEC-03,POST /api/predict (engine_id=0),Lower bound integer validation (ge=1),422 Unprocessable Entity,PASS,Pydantic Field validation
+SEC-04,POST /api/predict (engine_id=-5),Negative integer input rejection,422 Unprocessable Entity,PASS,Pydantic Field validation
+SEC-05,POST /api/predict (engine_id=101),Upper bound test fleet validation (le=100),422 Unprocessable Entity,PASS,Pydantic Field validation
+SEC-06,POST /api/predict (cutoff_cycle=0),Cutoff cycle lower bound validation (ge=1),422 Unprocessable Entity,PASS,Pydantic Field validation
+SEC-07,POST /api/predict (empty payload),Missing required engine_id field,422 Unprocessable Entity,PASS,Pydantic schema validation
+SEC-08,POST /api/predict (malformed JSON),Syntax-corrupted raw JSON payload,422 Unprocessable Entity,PASS,FastAPI JSON parser validation
+SEC-09,GET /api/engines (out-of-bounds query),critical_threshold=2.0 (ge=5.0 bound),422 Unprocessable Entity,PASS,FastAPI Query parameter validator
+SEC-10,Error Traceback Hygiene,GET /api/engines/999 404 response inspection,Clean JSON Detail,PASS,Zero internal stack trace or file path leakage
+SEC-11,Observability Header Hygiene,Response header audit across endpoints,X-Response-Time-Ms present,PASS,No secret keys or credentials leaked
+SEC-12,Fail-Closed Degraded State,Model unauthenticated / unloaded state,503 Service Unavailable,PASS,Endpoints fail closed safely without crashing

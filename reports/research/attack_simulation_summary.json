@@ -3,7 +3,7 @@
   "benchmark_dataset": "NASA C-MAPSS FD001 (Held-out Test, 100 engines)",
   "model_id": "histgradientboosting-fd001-v2.1",
   "algorithm": "HistGradientBoostingRegressor",
-  "timestamp_utc": "2026-10-21T07:46:17.870863+00:00",
+  "timestamp_utc": "2026-10-21T09:28:41.959120+00:00",
   "clean_baseline": {
     "protocol_a_unclipped": {
       "rmse": 13.9044,
@@ -23,9 +23,28 @@
       "max_abs_error": 40.4623,
       "n_samples": 100
     },
-    "drift_baseline": {
+    "clean_hpr_pct": 15.79,
+    "drift_baseline_vs_train": {
       "overall_status": "drift_alert",
-      "drift_detected": true
+      "drift_detected": true,
+      "alert_features": [
+        "sensor_2",
+        "sensor_4",
+        "sensor_7",
+        "sensor_11",
+        "sensor_12",
+        "sensor_15",
+        "sensor_20",
+        "sensor_21"
+      ],
+      "warning_features": [
+        "sensor_3",
+        "sensor_8",
+        "sensor_9",
+        "sensor_13",
+        "sensor_14",
+        "sensor_17"
+      ]
     }
   },
   "scenarios": {
@@ -54,7 +73,7 @@
         "std_delta_rul": 7.5,
         "delta_rul_95ci_low": -11.029,
         "delta_rul_95ci_high": -8.095,
-        "hazardous_prediction_rate_pct": 0.0,
+        "hazardous_prediction_rate_pct": 5.26,
         "unclipped_rmse": 18.1647,
         "unclipped_delta_rmse": 4.2603,
         "unclipped_mae": 13.5201,
@@ -72,14 +91,18 @@
         "drift_alert_vs_train": true,
         "drift_alert_vs_clean_test": false,
         "drift_status_vs_clean_test": "warning",
-        "psi_drift_count_vs_clean": 0,
+        "psi_drift_count_vs_clean": 1,
         "psi_warn_count_vs_clean": 0,
+        "psi_drift_channels_clean": "sensor_11",
+        "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": true
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
       "flagged_features_vs_clean": {
-        "psi_drift": [],
+        "psi_drift": [
+          "sensor_11"
+        ],
         "psi_warning": []
       }
     },
@@ -108,7 +131,7 @@
         "std_delta_rul": 8.33,
         "delta_rul_95ci_low": -13.738,
         "delta_rul_95ci_high": -10.459,
-        "hazardous_prediction_rate_pct": 0.0,
+        "hazardous_prediction_rate_pct": 5.26,
         "unclipped_rmse": 20.4374,
         "unclipped_delta_rmse": 6.533,
         "unclipped_mae": 15.5462,
@@ -126,14 +149,18 @@
         "drift_alert_vs_train": true,
         "drift_alert_vs_clean_test": false,
         "drift_status_vs_clean_test": "warning",
-        "psi_drift_count_vs_clean": 0,
+        "psi_drift_count_vs_clean": 1,
         "psi_warn_count_vs_clean": 0,
+        "psi_drift_channels_clean": "sensor_11",
+        "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": true
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
       "flagged_features_vs_clean": {
-        "psi_drift": [],
+        "psi_drift": [
+          "sensor_11"
+        ],
         "psi_warning": []
       }
     },
@@ -162,7 +189,7 @@
         "std_delta_rul": 5.34,
         "delta_rul_95ci_low": 4.193,
         "delta_rul_95ci_high": 6.302,
-        "hazardous_prediction_rate_pct": 5.3,
+        "hazardous_prediction_rate_pct": 31.58,
         "unclipped_rmse": 15.7392,
         "unclipped_delta_rmse": 1.8348,
         "unclipped_mae": 12.3014,
@@ -180,14 +207,18 @@
         "drift_alert_vs_train": true,
         "drift_alert_vs_clean_test": false,
         "drift_status_vs_clean_test": "warning",
-        "psi_drift_count_vs_clean": 0,
+        "psi_drift_count_vs_clean": 1,
         "psi_warn_count_vs_clean": 0,
+        "psi_drift_channels_clean": "sensor_11",
+        "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": true
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
       "flagged_features_vs_clean": {
-        "psi_drift": [],
+        "psi_drift": [
+          "sensor_11"
+        ],
         "psi_warning": []
       }
     },
@@ -216,7 +247,7 @@
         "std_delta_rul": 8.2,
         "delta_rul_95ci_low": -13.367,
         "delta_rul_95ci_high": -10.127,
-        "hazardous_prediction_rate_pct": 0.0,
+        "hazardous_prediction_rate_pct": 5.26,
         "unclipped_rmse": 20.1812,
         "unclipped_delta_rmse": 6.2768,
         "unclipped_mae": 15.3778,
@@ -235,14 +266,18 @@
         "drift_alert_vs_clean_test": false,
         "drift_status_vs_clean_test": "stable",
         "psi_drift_count_vs_clean": 0,
-        "psi_warn_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 1,
+        "psi_drift_channels_clean": "none",
+        "psi_warn_channels_clean": "sensor_11",
         "evades_operational_drift_detector": true
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "stable",
       "flagged_features_vs_clean": {
         "psi_drift": [],
-        "psi_warning": []
+        "psi_warning": [
+          "sensor_11"
+        ]
       }
     },
     "scenario_5_multisensor_bias": {
@@ -292,14 +327,20 @@
         "drift_alert_vs_train": true,
         "drift_alert_vs_clean_test": true,
         "drift_status_vs_clean_test": "drift_alert",
-        "psi_drift_count_vs_clean": 0,
+        "psi_drift_count_vs_clean": 3,
         "psi_warn_count_vs_clean": 0,
+        "psi_drift_channels_clean": "sensor_4,sensor_9,sensor_11",
+        "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": false
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "drift_alert",
       "flagged_features_vs_clean": {
-        "psi_drift": [],
+        "psi_drift": [
+          "sensor_4",
+          "sensor_9",
+          "sensor_11"
+        ],
         "psi_warning": []
       }
     },
@@ -359,14 +400,26 @@
         "drift_alert_vs_clean_test": true,
         "drift_status_vs_clean_test": "drift_alert",
         "psi_drift_count_vs_clean": 0,
-        "psi_warn_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 9,
+        "psi_drift_channels_clean": "none",
+        "psi_warn_channels_clean": "sensor_2,sensor_7,sensor_9,sensor_11,sensor_12,sensor_14,sensor_15,sensor_20,sensor_21",
         "evades_operational_drift_detector": false
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "drift_alert",
       "flagged_features_vs_clean": {
         "psi_drift": [],
-        "psi_warning": []
+        "psi_warning": [
+          "sensor_2",
+          "sensor_7",
+          "sensor_9",
+          "sensor_11",
+          "sensor_12",
+          "sensor_14",
+          "sensor_15",
+          "sensor_20",
+          "sensor_21"
+        ]
       }
     }
   }

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "title": "AeroSentinel Research Experiment Suite & Security Evaluation",
+    "academic_title": "Integrity-Assured Machine Learning for Aircraft Predictive Maintenance: Threat Modeling and Resilience Evaluation Using NASA C-MAPSS",
+    "dataset": "NASA C-MAPSS FD001 (Single-fault sea-level HPC degradation)",
+    "timestamp_utc": "2026-10-21T15:34:14.555071+00:00",
+    "target_venue": "IJSART (International Journal for Science and Advance Research In Technology)",
+    "git_commit": "bf3a858"
+  },
+  "system_environment": {
+    "os": "Windows 11 (AMD64)",
+    "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+    "python_version": "3.14.3",
+    "libraries": {
+      "scikit-learn": "1.4+",
+      "pandas": "2.2+",
+      "numpy": "1.26+",
+      "joblib": "1.4+",
+      "fastapi": "0.110+",
+      "cryptography": "42.0+"
+    }
+  },
+  "dataset_checksums": {
+    "train_FD001_sha256": "963b5e22825b34d8b21c69e1aeb4af3e647050eb672ee8834ba4b5d91d2de0f8",
+    "test_FD001_sha256": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851",
+    "RUL_FD001_sha256": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca"
+  },
+  "cryptographic_parameters": {
+    "algorithm": "Ed25519",
+    "public_key_hex": "2fc1416b5634cf20e6b403fafc572160b27615adbdf5352458a492d52251e45b",
+    "canonical_serialization": "RFC 8785 JSON (sorted keys, compact separators)",
+    "hash_algorithm": "SHA-256"
+  },
+  "prognostic_parameters": {
+    "champion_model": "HistGradientBoostingRegressor",
+    "engineered_features_count": 122,
+    "informative_sensors_count": 14,
+    "pruned_sensors_count": 7,
+    "clip_threshold_cycles": 125,
+    "critical_threshold_cycles": 25
+  },
+  "evaluation_protocols": {
+    "protocol_a_unclipped": "Raw official ground truth RUL at terminal cutoff cycle",
+    "protocol_b_clipped_125": "min(RUL, 125) ground truth at terminal cutoff cycle"
+  }
+}

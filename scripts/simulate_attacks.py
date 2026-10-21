@@ -20,11 +20,13 @@ import numpy as np
 import pandas as pd
 
 from aircraft_pm.attacks import (
+    calculate_hazardous_prediction_rate,
     compute_baseline_sensor_stats,
     inject_sensor_bias,
     inject_sensor_ramp,
     inject_sensor_replay,
 )
+
 from aircraft_pm.config import (
     DEFAULT_CLIP_RUL,
     HEALTH_CRITICAL,
@@ -97,16 +99,26 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
     clean_m_unclipped = evaluate_predictions(y_unclipped, preds_clean)
     clean_m_clipped = evaluate_predictions(y_clipped, preds_clean)
 
-    # Clean drift baseline
-    clean_drift = evaluate_feature_drift(
+    # Clean HPR (percentage of critical engines predicted > 25 cycles under clean model)
+    clean_hpr_res = calculate_hazardous_prediction_rate(
+        y_clipped, preds_clean, critical_threshold=HEALTH_CRITICAL
+    )
+    clean_hpr = clean_hpr_res["hpr_pct"]
+
+    # Clean drift baseline vs training data
+    clean_drift_vs_train = evaluate_feature_drift(
         reference_df=train_df,
         current_df=test_df_clean,
         feature_cols=INFORMATIVE_SENSOR_COLS,
+        reference_name="NASA C-MAPSS FD001 Train",
+        comparison_name="Clean Operational Test",
     )
 
     print(f"  Clean Unclipped Official RMSE: {clean_m_unclipped['rmse']:.4f} | NASA: {clean_m_unclipped['nasa_score']:.2f}")
     print(f"  Clean Clipped @ 125 RMSE:      {clean_m_clipped['rmse']:.4f} | NASA: {clean_m_clipped['nasa_score']:.2f}")
-    print(f"  Clean Baseline Drift Alert:    {clean_drift['drift_detected']} (PSI alerts: {len(clean_drift.get('drift_features', []))})")
+    print(f"  Clean Baseline HPR:            {clean_hpr:.1f}% ({clean_hpr_res['hazardous_count']}/{clean_hpr_res['critical_count']} critical engines)")
+    print(f"  Clean Drift vs Train Alert:    {clean_drift_vs_train['drift_detected']} (PSI alerts: {len(clean_drift_vs_train.get('alert_features', []))}) [Note: Due to run-to-failure censoring]")
+
 
     # 5. Define Attack Scenarios
     scenarios = [
@@ -177,6 +189,47 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
     summary_records = []
     detailed_results = {}
 
+    # Record clean baseline in summary
+    baseline_record = {
+        "scenario_id": "baseline_clean",
+        "scenario_name": "Clean Operational Baseline (No Attack)",
+        "attack_type": "none",
+        "onset_fraction": 0.0,
+        "target_sensors": "none",
+        "mean_delta_rul": 0.0,
+        "median_delta_rul": 0.0,
+        "std_delta_rul": 0.0,
+        "delta_rul_95ci_low": 0.0,
+        "delta_rul_95ci_high": 0.0,
+        "hazardous_prediction_rate_pct": clean_hpr,
+        # Protocol A
+        "unclipped_rmse": clean_m_unclipped["rmse"],
+        "unclipped_delta_rmse": 0.0,
+        "unclipped_mae": clean_m_unclipped["mae"],
+        "unclipped_delta_mae": 0.0,
+        "unclipped_nasa_total": clean_m_unclipped["nasa_score"],
+        "unclipped_delta_nasa": 0.0,
+        "unclipped_nasa_per_engine": round(clean_m_unclipped["nasa_score"] / n_engines, 2),
+        # Protocol B
+        "clipped_rmse": clean_m_clipped["rmse"],
+        "clipped_delta_rmse": 0.0,
+        "clipped_mae": clean_m_clipped["mae"],
+        "clipped_delta_mae": 0.0,
+        "clipped_nasa_total": clean_m_clipped["nasa_score"],
+        "clipped_delta_nasa": 0.0,
+        "clipped_nasa_per_engine": round(clean_m_clipped["nasa_score"] / n_engines, 2),
+        # Detector outcomes
+        "drift_alert_vs_train": clean_drift_vs_train.get("drift_detected", False),
+        "drift_alert_vs_clean_test": False,
+        "drift_status_vs_clean_test": "stable",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "psi_drift_channels_clean": "none",
+        "psi_warn_channels_clean": "none",
+        "evades_operational_drift_detector": False,
+    }
+    summary_records.append(baseline_record)
+
     print("\n[5/6] Executing attack scenarios...")
 
     for sc in scenarios:
@@ -228,16 +281,13 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
         std_delta = float(np.std(delta_rul))
         ci_low, ci_high = bootstrap_ci(delta_rul)
 
-        # Hazardous Prediction Rate (HPR):
-        # Engines where true_rul <= HEALTH_CRITICAL (25 cycles) but attack inflated prediction by > +15 cycles
-        critical_mask = y_clipped <= HEALTH_CRITICAL
-        n_critical = int(np.sum(critical_mask))
-        if n_critical > 0:
-            hazardous_count = int(np.sum((delta_rul > 15.0) & critical_mask))
-            hpr = round(float(hazardous_count / n_critical) * 100.0, 1)
-        else:
-            hazardous_count = 0
-            hpr = 0.0
+        # Canonical Hazardous Prediction Rate (HPR):
+        # Percentage of critical engines (true RUL <= 25) falsely predicted safe (> 25)
+        hpr_dict = calculate_hazardous_prediction_rate(
+            y_clipped, preds_atk, critical_threshold=HEALTH_CRITICAL
+        )
+        hpr = hpr_dict["hpr_pct"]
+
 
         # Protocol A metrics (unclipped)
         m_unclipped = evaluate_predictions(y_unclipped, preds_atk)
@@ -273,8 +323,12 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
         alert_vs_clean = drift_report_clean_test.get("drift_detected", False)
         status_vs_clean = drift_report_clean_test.get("overall_status", "unknown")
 
-        psi_drift_clean = [f for f, r in drift_report_clean_test.get("features", {}).items() if r.get("psi_status") == "drift"]
-        psi_warn_clean = [f for f, r in drift_report_clean_test.get("features", {}).items() if r.get("psi_status") == "warning"]
+        # Alert features: channels with PSI >= 0.25 (significant distribution shift)
+        # Warning features: channels with 0.10 <= PSI < 0.25 or significant KS divergence
+        psi_drift_clean = drift_report_clean_test.get("alert_features", [])
+        psi_warn_clean = drift_report_clean_test.get("warning_features", [])
+        psi_drift_train = drift_report_train.get("alert_features", [])
+        psi_warn_train = drift_report_train.get("warning_features", [])
 
         # Stealthy evasion against operational detector: significant prognostic impact, but operational alert NOT triggered
         is_stealthy_operational = (not alert_vs_clean) and (abs(delta_rmse_unclipped) > 1.0 or abs(mean_delta) > 5.0)
@@ -313,6 +367,8 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
             "drift_status_vs_clean_test": status_vs_clean,
             "psi_drift_count_vs_clean": len(psi_drift_clean),
             "psi_warn_count_vs_clean": len(psi_warn_clean),
+            "psi_drift_channels_clean": ",".join(psi_drift_clean) if psi_drift_clean else "none",
+            "psi_warn_channels_clean": ",".join(psi_warn_clean) if psi_warn_clean else "none",
             "evades_operational_drift_detector": is_stealthy_operational,
         }
         summary_records.append(record)
@@ -326,6 +382,7 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
                 "psi_warning": psi_warn_clean,
             },
         }
+
 
         print(
             f"  [{sc_id:32s}] Delta_RUL: {mean_delta:+5.1f}c | "
@@ -352,11 +409,15 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
         "clean_baseline": {
             "protocol_a_unclipped": clean_m_unclipped,
             "protocol_b_clipped_125": clean_m_clipped,
-            "drift_baseline": {
-                "overall_status": clean_drift.get("overall_status"),
-                "drift_detected": clean_drift.get("drift_detected"),
+            "clean_hpr_pct": clean_hpr,
+            "drift_baseline_vs_train": {
+                "overall_status": clean_drift_vs_train.get("overall_status"),
+                "drift_detected": clean_drift_vs_train.get("drift_detected"),
+                "alert_features": clean_drift_vs_train.get("alert_features", []),
+                "warning_features": clean_drift_vs_train.get("warning_features", []),
             },
         },
+
         "scenarios": detailed_results,
     }
 
@@ -409,14 +470,23 @@ def generate_markdown_summary(
 
     for r in records:
         ci_str = f"[{r['delta_rul_95ci_low']:+.1f}, {r['delta_rul_95ci_high']:+.1f}]"
+        if r["scenario_id"] == "baseline_clean":
+            stealth_str = "CLEAN BASELINE"
+        elif r["evades_operational_drift_detector"]:
+            stealth_str = "⚠️ EVASIVE"
+        else:
+            stealth_str = "🚨 FLAGGED"
+
+
         lines.append(
             f"| **{r['scenario_id']}** | {r['scenario_name']} | {r['onset_fraction']:.2f} | "
             f"**{r['mean_delta_rul']:+.2f}** {ci_str} | **{r['hazardous_prediction_rate_pct']:.1f}%** | "
             f"{r['unclipped_rmse']:.2f} ({r['unclipped_delta_rmse']:+.2f}) | "
             f"{r['unclipped_nasa_total']:.1f} ({r['unclipped_delta_nasa']:+.1f}) | "
             f"`{r['drift_status_vs_clean_test']}` | {r['psi_drift_count_vs_clean']}/14 | "
-            f"{'⚠️ EVASIVE' if r['evades_operational_drift_detector'] else '🚨 FLAGGED'} |"
+            f"{stealth_str} |"
         )
+
 
     lines.extend([
         "",

@@ -17,14 +17,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from aircraft_pm.config import (
+    AEROSENTINEL_ED25519_PUBLIC_KEY,
     CONSTANT_OR_LOW_VARIANCE_COLS,
     DEFAULT_CLIP_RUL,
     HEALTH_CRITICAL,
     HEALTH_WARNING,
     INFORMATIVE_SENSOR_COLS,
     MODELS_DIR,
+    REPORTS_DIR,
     SENSOR_DESCRIPTIONS,
 )
+
 from aircraft_pm.data import load_test_data, load_train_data
 from aircraft_pm.features import CMAPSSPreprocessor
 from aircraft_pm.drift import evaluate_feature_drift
@@ -836,3 +839,56 @@ def get_sensor_drift(
 def get_model_lineage():
     """Retrieve cryptographic model lineage manifest, artifact SHA-256 hashes, and training parameters."""
     return get_model_lineage_manifest()
+
+
+# -------------------------------------------------------------
+# SECURITY MONITORING & RESILIENCE ENDPOINTS
+# -------------------------------------------------------------
+@app.get("/api/security/status")
+def get_security_status():
+    """Retrieve runtime cryptographic artifact authentication state and security parameters."""
+    manifest = app_state.get("manifest")
+    has_model = app_state.get("prod_model") is not None
+    has_prep = app_state.get("preprocessor") is not None
+    auth_status = app_state.get("auth_status", "UNKNOWN")
+
+    sig_info = manifest.get("signature", {}) if manifest else {}
+
+    return {
+        "status": "success",
+        "auth_status": auth_status,
+        "is_authenticated": bool(auth_status == "AUTHENTICATED" and has_model and has_prep),
+        "signature_algorithm": sig_info.get("algorithm", "Ed25519"),
+        "key_id": sig_info.get("key_id", "aerosentinel-ed25519-v1"),
+        "signed_at": sig_info.get("signed_at"),
+        "public_key_hex": AEROSENTINEL_ED25519_PUBLIC_KEY,
+        "model_loaded": has_model,
+        "preprocessor_loaded": has_prep,
+        "verified_artifacts": list(manifest.get("artifacts_sha256", {}).keys()) if manifest else [],
+        "security_policy": "Fail-Closed Asymmetric Signature & Digest Verification (Pre-Deserialization)",
+        "advisory_disclaimer": (
+            "AeroSentinel provides ground-side ML integrity validation and offline threat evaluation. "
+            "It is not an airborne avionics defense system and does not certify operational flight safety."
+        ),
+    }
+
+
+@app.get("/api/security/attack-simulation")
+def get_attack_simulation_results():
+    """Retrieve verified offline telemetry attack simulation results and drift evasion outcomes."""
+    sim_path = REPORTS_DIR / "research" / "attack_simulation_summary.json"
+    if not sim_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Attack simulation results have not been generated yet. Run scripts/simulate_attacks.py first.",
+        )
+    try:
+        with open(sim_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not read attack simulation summary: {e}",
+        )
+

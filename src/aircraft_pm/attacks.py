@@ -191,3 +191,50 @@ def inject_sensor_replay(
             df_out.loc[mask, col] = frozen_values[col]
 
     return df_out
+
+
+def calculate_hazardous_prediction_rate(
+    y_true: Union[np.ndarray, List[float]],
+    y_pred: Union[np.ndarray, List[float]],
+    critical_threshold: float = 25.0,
+) -> Dict[str, Union[float, int]]:
+    """Calculate the Hazardous Prediction Rate (HPR).
+
+    HPR is defined as the percentage of genuinely critical engines
+    (true RUL <= critical_threshold) whose predicted RUL falsely exceeds
+    the critical maintenance threshold (pred_rul > critical_threshold),
+    leading to dangerous deferral of needed maintenance.
+
+    Args:
+        y_true: Array of true ground-truth RUL values.
+        y_pred: Array of predicted RUL values under evaluation.
+        critical_threshold: RUL cycle threshold defining critical health (default: 25.0).
+
+    Returns:
+        Dict containing:
+            - 'hpr_pct': Percentage of critical engines falsely predicted safe (0.0 to 100.0).
+            - 'critical_count': Total number of critical units (true RUL <= threshold).
+            - 'hazardous_count': Number of critical units with pred_rul > threshold.
+    """
+    y_t = np.asarray(y_true, dtype=float)
+    y_p = np.asarray(y_pred, dtype=float)
+
+    critical_mask = y_t <= critical_threshold
+    n_critical = int(np.sum(critical_mask))
+
+    if n_critical == 0:
+        return {
+            "hpr_pct": 0.0,
+            "critical_count": 0,
+            "hazardous_count": 0,
+        }
+
+    hazardous_count = int(np.sum((y_p > critical_threshold) & critical_mask))
+    hpr_pct = round(float(hazardous_count / n_critical) * 100.0, 2)
+
+    return {
+        "hpr_pct": hpr_pct,
+        "critical_count": n_critical,
+        "hazardous_count": hazardous_count,
+    }
+

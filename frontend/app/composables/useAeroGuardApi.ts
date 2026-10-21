@@ -51,6 +51,9 @@ export function useAeroGuardApi() {
     getMetrics: () => fetchApi<any>('/api/metrics'),
     getDrift: (ksAlpha = 0.01, psiWarning = 0.10, psiDrift = 0.25) =>
       fetchApi<any>(`/api/drift?ks_alpha=${ksAlpha}&psi_warning=${psiWarning}&psi_drift=${psiDrift}`),
-    getLineage: () => fetchApi<any>('/api/models/lineage')
+    getLineage: () => fetchApi<any>('/api/models/lineage'),
+    getSecurityStatus: () => fetchApi<any>('/api/security/status'),
+    getAttackSimulation: () => fetchApi<any>('/api/security/attack-simulation')
   }
 }
+

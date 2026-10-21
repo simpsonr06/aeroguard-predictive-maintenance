@@ -1,0 +1,12 @@
+test_id,test_name,manipulation_vector,expected_outcome,test_status,security_mechanism
+TC-01,Genuine Signed Artifacts,"Valid manifest, trusted key, genuine model & preprocessor",Verified & Loaded,PASS,No exception; full pipeline initialized
+TC-02,Single-Byte Model Tampering,Flipped byte in best_model.joblib payload,Rejected (SHA-256 mismatch),PASS,ArtifactSecurityError raised prior to joblib.load
+TC-03,Single-Byte Preprocessor Tampering,Flipped byte in preprocessor.joblib payload,Rejected (SHA-256 mismatch),PASS,ArtifactSecurityError raised prior to joblib.load
+TC-04,Signed Metadata Tampering,Modified unclipped RMSE in model_manifest.json,Rejected (Ed25519 signature invalid),PASS,Cryptographic signature check failed
+TC-05,Missing Digital Signature,Unsigned manifest evaluated in secure production mode,Rejected (Signature block missing),PASS,Fail-closed enforcement in secure mode
+TC-06,Corrupted Signature Hex,Tampered 4 hex characters in signature_hex,Rejected (Ed25519 signature invalid),PASS,Signature bytes fail elliptic-curve verification
+TC-07,Malformed Manifest JSON,Syntax error / corrupted JSON string in manifest,Rejected (Malformed JSON),PASS,Fails closed before loading
+TC-08,Trust Key Mismatch,Manifest signed by untrusted / different Ed25519 key,Rejected (Untrusted key verification),PASS,Signature rejected against configured public key
+TC-09,Missing Artifact File,best_model.joblib deleted from local filesystem,Rejected (Artifact missing),PASS,Missing file check triggers fail-closed error
+TC-10,Manifest Rewrite Attack,Model altered and SHA-256 updated without signing key,Rejected (Signature invalid on new manifest),PASS,Attacker unable to forge valid Ed25519 signature
+TC-11,Development Mode Fallback,Unsigned manifest in explicit require_signature=False mode,Allowed if SHA-256 matches,PASS,Tampered file still rejected in dev mode
