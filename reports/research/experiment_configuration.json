@@ -3,7 +3,7 @@
     "title": "AeroSentinel Research Experiment Suite & Security Evaluation",
     "academic_title": "Integrity-Assured Machine Learning for Aircraft Predictive Maintenance: Threat Modeling and Resilience Evaluation Using NASA C-MAPSS",
     "dataset": "NASA C-MAPSS FD001 (Single-fault sea-level HPC degradation)",
-    "timestamp_utc": "2026-10-21T15:34:14.555071+00:00",
+    "timestamp_utc": "2026-10-21T16:49:46.611693+00:00",
     "target_venue": "IJSART (International Journal for Science and Advance Research In Technology)",
     "git_commit": "bf3a858"
   },

@@ -129,20 +129,29 @@ def run_benchmarks(n_reps: int = 100) -> List[Dict[str, Any]]:
     # Prepare features for inference
     X_scaled, _ = prep.transform(test_df)
     single_engine_features = X_scaled[-1:, :]
+    fleet_features = X_scaled[:100, :]
 
-    # 6. Single-engine Inference
     def bench_single_inference():
         _ = model.predict(single_engine_features)
-
-    t_inf_single = measure_latencies(bench_single_inference, n_reps=n_reps)
-
-    # 7. Fleet-wide Inference (100 engines terminal rows)
-    fleet_features = X_scaled[:100, :]
 
     def bench_fleet_inference():
         _ = model.predict(fleet_features)
 
-    t_inf_fleet = measure_latencies(bench_fleet_inference, n_reps=n_reps)
+    # 6 & 7. Single-engine vs Fleet-wide Inference (Interleaved to eliminate CPU throttling / thread-pool ordering bias)
+    for _ in range(25):
+        bench_single_inference()
+        bench_fleet_inference()
+
+    t_inf_single: List[float] = []
+    t_inf_fleet: List[float] = []
+    for _ in range(n_reps):
+        t0 = time.perf_counter()
+        bench_single_inference()
+        t_inf_single.append((time.perf_counter() - t0) * 1000.0)
+
+        t0 = time.perf_counter()
+        bench_fleet_inference()
+        t_inf_fleet.append((time.perf_counter() - t0) * 1000.0)
 
     # 8. Covariate Drift Evaluation (KS + PSI on 14 channels)
     def bench_drift():

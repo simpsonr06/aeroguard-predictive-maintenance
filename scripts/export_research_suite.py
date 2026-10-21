@@ -190,6 +190,17 @@ def main():
         {"id": "scenario_6_frozen_replay", "name": "Frozen Nominal Cruise Replay (All Informative Sensors)", "type": "frozen_replay", "target_sensors": INFORMATIVE_SENSOR_COLS, "params": {}, "onset": 0.40},
     ]
 
+    all_eng_ids = sorted(test_df_clean["engine_id"].unique())
+    calib_eng_ids = all_eng_ids[:50]
+    eval_eng_ids = all_eng_ids[50:]
+    df_calib_clean = test_df_clean[test_df_clean["engine_id"].isin(calib_eng_ids)].copy()
+    df_eval_clean = test_df_clean[test_df_clean["engine_id"].isin(eval_eng_ids)].copy()
+
+    clean_drift_disjoint = evaluate_feature_drift(
+        df_calib_clean, df_eval_clean, INFORMATIVE_SENSOR_COLS,
+        "Calibration Engines (1-50)", "Clean Evaluation Engines (51-100)"
+    )
+
     engine_preds_df = pd.DataFrame({
         "engine_id": test_last["engine_id"].values,
         "true_rul_unclipped": y_unclipped,
@@ -233,6 +244,12 @@ def main():
         "psi_drift_channels_clean": "none",
         "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": False,
+        "drift_alert_disjoint": clean_drift_disjoint.get("drift_detected", False),
+        "drift_status_disjoint": clean_drift_disjoint.get("overall_status", "stable"),
+        "psi_drift_count_disjoint": len(clean_drift_disjoint.get("alert_features", [])),
+        "psi_warn_count_disjoint": len(clean_drift_disjoint.get("warning_features", [])),
+        "psi_drift_channels_disjoint": "none",
+        "psi_warn_channels_disjoint": "none",
     })
 
     psi_matrix = {}
@@ -273,6 +290,17 @@ def main():
         status_clean = drift_clean.get("overall_status", "unknown")
         alert_clean_bool = drift_clean.get("drift_detected", False)
 
+        # Disjoint engine drift evaluation (51-100 vs 1-50)
+        df_eval_atk = atk_df[atk_df["engine_id"].isin(eval_eng_ids)].copy()
+        drift_disjoint = evaluate_feature_drift(
+            df_calib_clean, df_eval_atk, INFORMATIVE_SENSOR_COLS,
+            "Calibration Engines (1-50)", f"Attacked Evaluation Engines ({sc_id}, 51-100)"
+        )
+        alerts_disjoint = drift_disjoint.get("alert_features", [])
+        warns_disjoint = drift_disjoint.get("warning_features", [])
+        status_disjoint = drift_disjoint.get("overall_status", "stable")
+        alert_disjoint_bool = drift_disjoint.get("drift_detected", False)
+
         is_evasive = (not alert_clean_bool) and (abs(m_u["rmse"] - clean_unclipped["rmse"]) > 1.0 or abs(float(np.mean(delta_rul))) > 5.0)
 
         # Store PSI per feature for heatmap
@@ -312,6 +340,12 @@ def main():
             "psi_drift_channels_clean": ",".join(alerts_clean) if alerts_clean else "none",
             "psi_warn_channels_clean": ",".join(warns_clean) if warns_clean else "none",
             "evades_operational_drift_detector": is_evasive,
+            "drift_alert_disjoint": alert_disjoint_bool,
+            "drift_status_disjoint": status_disjoint,
+            "psi_drift_count_disjoint": len(alerts_disjoint),
+            "psi_warn_count_disjoint": len(warns_disjoint),
+            "psi_drift_channels_disjoint": ",".join(alerts_disjoint) if alerts_disjoint else "none",
+            "psi_warn_channels_disjoint": ",".join(warns_disjoint) if warns_disjoint else "none",
         })
 
     pd.DataFrame(attack_records).to_csv(RESEARCH_DIR / "sensor_attack_results.csv", index=False)

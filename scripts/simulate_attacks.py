@@ -174,9 +174,27 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
             "target_sensors": INFORMATIVE_SENSOR_COLS,
             "parameters": {},
             "onset_fraction": 0.40,
-            "rationale": "Freezes all 14 sensors at cycle 40% (holding early-life cruise values to end of flight).",
+            "rationale": "Freezes all 15 informative sensors at cycle 40% (holding early-life cruise values to end of flight).",
         },
     ]
+
+    # Partition test fleet for disjoint engine-level detector calibration vs evaluation:
+    # Engines 1-50: Calibration fleet (unattacked reference baseline)
+    # Engines 51-100: Evaluation fleet (screened clean and under attack)
+    all_eng_ids = sorted(test_df_clean["engine_id"].unique())
+    calib_eng_ids = all_eng_ids[:50]
+    eval_eng_ids = all_eng_ids[50:]
+    df_calib_clean = test_df_clean[test_df_clean["engine_id"].isin(calib_eng_ids)].copy()
+    df_eval_clean = test_df_clean[test_df_clean["engine_id"].isin(eval_eng_ids)].copy()
+
+    # Clean disjoint drift evaluation (FPR check on unseen clean engines)
+    clean_drift_disjoint = evaluate_feature_drift(
+        reference_df=df_calib_clean,
+        current_df=df_eval_clean,
+        feature_cols=INFORMATIVE_SENSOR_COLS,
+        reference_name="Calibration Engines (1-50)",
+        comparison_name="Clean Evaluation Engines (51-100)",
+    )
 
     # Store per-engine predictions table
     engine_preds_df = pd.DataFrame({
@@ -218,7 +236,7 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
         "clipped_nasa_total": clean_m_clipped["nasa_score"],
         "clipped_delta_nasa": 0.0,
         "clipped_nasa_per_engine": round(clean_m_clipped["nasa_score"] / n_engines, 2),
-        # Detector outcomes
+        # Detector outcomes (Full Fleet)
         "drift_alert_vs_train": clean_drift_vs_train.get("drift_detected", False),
         "drift_alert_vs_clean_test": False,
         "drift_status_vs_clean_test": "stable",
@@ -227,6 +245,13 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
         "psi_drift_channels_clean": "none",
         "psi_warn_channels_clean": "none",
         "evades_operational_drift_detector": False,
+        # Detector outcomes (Disjoint Engine Split: 51-100 vs 1-50)
+        "drift_alert_disjoint": clean_drift_disjoint.get("drift_detected", False),
+        "drift_status_disjoint": clean_drift_disjoint.get("overall_status", "stable"),
+        "psi_drift_count_disjoint": len(clean_drift_disjoint.get("alert_features", [])),
+        "psi_warn_count_disjoint": len(clean_drift_disjoint.get("warning_features", [])),
+        "psi_drift_channels_disjoint": "none",
+        "psi_warn_channels_disjoint": "none",
     }
     summary_records.append(baseline_record)
 
@@ -319,6 +344,20 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
             comparison_name=f"Attacked Test ({sc_id})",
         )
 
+        # C) Against disjoint calibration engines (Evaluation Engines 51-100 vs Calibration Engines 1-50)
+        df_eval_attacked = attacked_test_df[attacked_test_df["engine_id"].isin(eval_eng_ids)].copy()
+        drift_report_disjoint = evaluate_feature_drift(
+            reference_df=df_calib_clean,
+            current_df=df_eval_attacked,
+            feature_cols=INFORMATIVE_SENSOR_COLS,
+            reference_name="Calibration Engines (1-50)",
+            comparison_name=f"Attacked Evaluation Engines ({sc_id}, 51-100)",
+        )
+        psi_drift_disjoint = drift_report_disjoint.get("alert_features", [])
+        psi_warn_disjoint = drift_report_disjoint.get("warning_features", [])
+        status_disjoint = drift_report_disjoint.get("overall_status", "stable")
+        alert_disjoint = drift_report_disjoint.get("drift_detected", False)
+
         alert_vs_train = drift_report_train.get("drift_detected", False)
         alert_vs_clean = drift_report_clean_test.get("drift_detected", False)
         status_vs_clean = drift_report_clean_test.get("overall_status", "unknown")
@@ -361,7 +400,7 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
             "clipped_nasa_total": m_clipped["nasa_score"],
             "clipped_delta_nasa": delta_nasa_clipped,
             "clipped_nasa_per_engine": round(m_clipped["nasa_score"] / n_engines, 2),
-            # Detector outcomes
+            # Detector outcomes (Full Fleet)
             "drift_alert_vs_train": alert_vs_train,
             "drift_alert_vs_clean_test": alert_vs_clean,
             "drift_status_vs_clean_test": status_vs_clean,
@@ -370,6 +409,13 @@ def run_attack_simulation_suite() -> Dict[str, Any]:
             "psi_drift_channels_clean": ",".join(psi_drift_clean) if psi_drift_clean else "none",
             "psi_warn_channels_clean": ",".join(psi_warn_clean) if psi_warn_clean else "none",
             "evades_operational_drift_detector": is_stealthy_operational,
+            # Detector outcomes (Disjoint Engine Split: 51-100 vs 1-50)
+            "drift_alert_disjoint": alert_disjoint,
+            "drift_status_disjoint": status_disjoint,
+            "psi_drift_count_disjoint": len(psi_drift_disjoint),
+            "psi_warn_count_disjoint": len(psi_warn_disjoint),
+            "psi_drift_channels_disjoint": ",".join(psi_drift_disjoint) if psi_drift_disjoint else "none",
+            "psi_warn_channels_disjoint": ",".join(psi_warn_disjoint) if psi_warn_disjoint else "none",
         }
         summary_records.append(record)
         detailed_results[sc_id] = {

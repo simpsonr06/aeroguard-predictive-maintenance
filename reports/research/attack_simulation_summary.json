@@ -3,7 +3,7 @@
   "benchmark_dataset": "NASA C-MAPSS FD001 (Held-out Test, 100 engines)",
   "model_id": "histgradientboosting-fd001-v2.1",
   "algorithm": "HistGradientBoostingRegressor",
-  "timestamp_utc": "2026-10-21T09:28:41.959120+00:00",
+  "timestamp_utc": "2026-10-21T16:49:12.498177+00:00",
   "clean_baseline": {
     "protocol_a_unclipped": {
       "rmse": 13.9044,
@@ -95,7 +95,13 @@
         "psi_warn_count_vs_clean": 0,
         "psi_drift_channels_clean": "sensor_11",
         "psi_warn_channels_clean": "none",
-        "evades_operational_drift_detector": true
+        "evades_operational_drift_detector": true,
+        "drift_alert_disjoint": false,
+        "drift_status_disjoint": "warning",
+        "psi_drift_count_disjoint": 1,
+        "psi_warn_count_disjoint": 0,
+        "psi_drift_channels_disjoint": "sensor_11",
+        "psi_warn_channels_disjoint": "none"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
@@ -153,7 +159,13 @@
         "psi_warn_count_vs_clean": 0,
         "psi_drift_channels_clean": "sensor_11",
         "psi_warn_channels_clean": "none",
-        "evades_operational_drift_detector": true
+        "evades_operational_drift_detector": true,
+        "drift_alert_disjoint": false,
+        "drift_status_disjoint": "warning",
+        "psi_drift_count_disjoint": 1,
+        "psi_warn_count_disjoint": 0,
+        "psi_drift_channels_disjoint": "sensor_11",
+        "psi_warn_channels_disjoint": "none"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
@@ -211,7 +223,13 @@
         "psi_warn_count_vs_clean": 0,
         "psi_drift_channels_clean": "sensor_11",
         "psi_warn_channels_clean": "none",
-        "evades_operational_drift_detector": true
+        "evades_operational_drift_detector": true,
+        "drift_alert_disjoint": false,
+        "drift_status_disjoint": "stable",
+        "psi_drift_count_disjoint": 0,
+        "psi_warn_count_disjoint": 1,
+        "psi_drift_channels_disjoint": "none",
+        "psi_warn_channels_disjoint": "sensor_11"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "warning",
@@ -269,7 +287,13 @@
         "psi_warn_count_vs_clean": 1,
         "psi_drift_channels_clean": "none",
         "psi_warn_channels_clean": "sensor_11",
-        "evades_operational_drift_detector": true
+        "evades_operational_drift_detector": true,
+        "drift_alert_disjoint": false,
+        "drift_status_disjoint": "warning",
+        "psi_drift_count_disjoint": 1,
+        "psi_warn_count_disjoint": 0,
+        "psi_drift_channels_disjoint": "sensor_11",
+        "psi_warn_channels_disjoint": "none"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "stable",
@@ -331,7 +355,13 @@
         "psi_warn_count_vs_clean": 0,
         "psi_drift_channels_clean": "sensor_4,sensor_9,sensor_11",
         "psi_warn_channels_clean": "none",
-        "evades_operational_drift_detector": false
+        "evades_operational_drift_detector": false,
+        "drift_alert_disjoint": true,
+        "drift_status_disjoint": "drift_alert",
+        "psi_drift_count_disjoint": 3,
+        "psi_warn_count_disjoint": 0,
+        "psi_drift_channels_disjoint": "sensor_4,sensor_9,sensor_11",
+        "psi_warn_channels_disjoint": "none"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "drift_alert",
@@ -368,7 +398,7 @@
         ],
         "parameters": {},
         "onset_fraction": 0.4,
-        "rationale": "Freezes all 14 sensors at cycle 40% (holding early-life cruise values to end of flight)."
+        "rationale": "Freezes all 15 informative sensors at cycle 40% (holding early-life cruise values to end of flight)."
       },
       "metrics": {
         "scenario_id": "scenario_6_frozen_replay",
@@ -403,7 +433,13 @@
         "psi_warn_count_vs_clean": 9,
         "psi_drift_channels_clean": "none",
         "psi_warn_channels_clean": "sensor_2,sensor_7,sensor_9,sensor_11,sensor_12,sensor_14,sensor_15,sensor_20,sensor_21",
-        "evades_operational_drift_detector": false
+        "evades_operational_drift_detector": false,
+        "drift_alert_disjoint": true,
+        "drift_status_disjoint": "drift_alert",
+        "psi_drift_count_disjoint": 3,
+        "psi_warn_count_disjoint": 8,
+        "psi_drift_channels_disjoint": "sensor_2,sensor_11,sensor_21",
+        "psi_warn_channels_disjoint": "sensor_3,sensor_4,sensor_7,sensor_8,sensor_9,sensor_14,sensor_15,sensor_20"
       },
       "drift_vs_train_status": "drift_alert",
       "drift_vs_clean_test_status": "drift_alert",

@@ -1,9 +1,9 @@
 benchmark_name,category,description,mean_ms,median_ms,std_ms,min_ms,max_ms,p5_ms,p95_ms,p99_ms,repetitions
-ed25519_signature_verification,Cryptographic Security,Verification of Ed25519 digital signature over canonical manifest JSON payload,0.112,0.102,0.035,0.098,0.375,0.098,0.163,0.216,100
-sha256_artifact_hashing,Artifact Integrity,Streaming SHA-256 digest computation across all 5 model and preprocessor artifacts,15.342,14.934,1.394,13.803,23.924,13.942,17.586,18.834,100
-joblib_deserialization,Model Loading,Deserialization of preprocessor.joblib and best_model.joblib from local filesystem,9.561,9.417,0.966,8.127,13.677,8.415,11.346,11.912,100
-total_verified_pipeline_load,End-to-End Startup,Complete verified loader: Ed25519 verification + SHA-256 checks + joblib deserialization,24.834,24.563,1.712,22.73,37.162,23.135,26.706,28.06,100
-feature_engineering_transform,Preprocessing,"Temporal causal rolling-window extraction and scaling (122 features across 13,096 cycles)",142.27,137.601,11.939,130.09,176.123,132.008,169.041,174.488,30
-single_engine_inference,Prognostic Inference,Single-engine RUL point prediction using HistGradientBoostingRegressor,1.624,1.336,0.665,0.784,4.695,1.013,2.672,3.781,100
-fleet_100_engines_inference,Prognostic Inference,Batch prediction for all 100 test fleet engines at terminal cutoff cycle,1.468,1.234,0.53,0.791,3.335,0.835,2.633,2.682,100
-statistical_drift_evaluation,Covariate Monitoring,Non-parametric two-sample Kolmogorov-Smirnov test and 10-bin PSI across 14 informative channels,103.232,102.762,3.025,98.456,110.008,98.697,107.831,109.572,20
+ed25519_signature_verification,Cryptographic Security,Verification of Ed25519 digital signature over canonical manifest JSON payload,0.127,0.111,0.058,0.1,0.546,0.102,0.249,0.326,100
+sha256_artifact_hashing,Artifact Integrity,Streaming SHA-256 digest computation across all 5 model and preprocessor artifacts,14.929,14.773,0.721,13.85,17.054,14.018,16.403,16.891,100
+joblib_deserialization,Model Loading,Deserialization of preprocessor.joblib and best_model.joblib from local filesystem,9.475,8.653,2.433,7.824,24.53,8.021,14.32,18.023,100
+total_verified_pipeline_load,End-to-End Startup,Complete verified loader: Ed25519 verification + SHA-256 checks + joblib deserialization,24.369,23.904,1.739,21.918,37.161,22.763,26.706,27.482,100
+feature_engineering_transform,Preprocessing,"Temporal causal rolling-window extraction and scaling (122 features across 13,096 cycles)",135.957,135.619,2.942,130.118,144.637,132.462,141.527,144.225,30
+single_engine_inference,Prognostic Inference,Single-engine RUL point prediction using HistGradientBoostingRegressor,1.394,1.16,0.584,0.792,3.96,0.826,2.43,3.436,100
+fleet_100_engines_inference,Prognostic Inference,Batch prediction for all 100 test fleet engines at terminal cutoff cycle,1.342,1.173,0.582,0.806,5.462,0.826,2.111,2.906,100
+statistical_drift_evaluation,Covariate Monitoring,Non-parametric two-sample Kolmogorov-Smirnov test and 10-bin PSI across 14 informative channels,100.729,100.291,2.911,94.239,105.391,97.145,105.322,105.377,20
