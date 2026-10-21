@@ -28,13 +28,44 @@
     "pruned_invariant_sensors_count": 7,
     "total_engineered_features": 122
   },
+  "evaluation_protocols": {
+    "raw_unclipped_official_test": {
+      "protocol_name": "Raw Unclipped Official Test Labels",
+      "target_definition": "Unmodified RUL_FD001.txt ground truth at final observed cycle",
+      "clip_threshold_cycles": null,
+      "description": "Standard NASA PHM 2008 competition benchmark on 100 held-out test engines at final observed cycle.",
+      "rmse": 13.9044,
+      "mae": 10.4044,
+      "r2": 0.888,
+      "nasa_score_total": 301.97,
+      "nasa_score_per_engine": 3.02,
+      "test_engines_count": 100
+    },
+    "clipped_125_ground_truth": {
+      "protocol_name": "Ground-Truth Labels Clipped at 125 Cycles",
+      "target_definition": "Piecewise linear ground truth min(RUL, 125) at final observed cycle",
+      "clip_threshold_cycles": 125,
+      "description": "Prognostic evaluation aligned with training target policy min(RUL, 125) on 100 held-out test engines at final observed cycle.",
+      "rmse": 13.0082,
+      "mae": 9.3344,
+      "r2": 0.8946,
+      "nasa_score_total": 280.35,
+      "nasa_score_per_engine": 2.8,
+      "test_engines_count": 100
+    }
+  },
   "evaluation_regimes": {
-    "official_test_rmse": 13.01,
-    "official_test_mae": 10.4,
-    "official_test_r2": 0.888,
-    "official_nasa_score_total": 302.0,
-    "official_nasa_score_per_engine": 3.02,
-    "cross_validation_rmse_mean": 16.2,
+    "raw_unclipped_official_test_rmse": 13.9044,
+    "raw_unclipped_official_test_mae": 10.4044,
+    "raw_unclipped_official_test_r2": 0.888,
+    "raw_unclipped_official_nasa_score_total": 301.97,
+    "raw_unclipped_official_nasa_score_per_engine": 3.02,
+    "clipped_125_test_rmse": 13.0082,
+    "clipped_125_test_mae": 9.3344,
+    "clipped_125_test_r2": 0.8946,
+    "clipped_125_nasa_score_total": 280.35,
+    "clipped_125_nasa_score_per_engine": 2.8,
+    "cross_validation_rmse_mean": 13.76,
     "test_engines_count": 100,
     "train_engines_count": 100
   },
@@ -50,7 +81,8 @@
     "test_FD001": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851",
     "RUL_FD001": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca"
   },
-  "mlflow_evaluation": "MLflow was evaluated as an artifact tracking option. For this self-contained NASA C-MAPSS benchmark research prototype, introducing MLflow would add heavy dependencies (sqlite/psycopg2, alembic, greenlet, sqlalchemy, cloudpickle, databricks-sdk), a separate tracking server, and container bloat without runtime benefit. An immutable, cryptographic JSON manifest with SHA-256 checksums provides 100% auditable, deterministic, zero-overhead lineage that runs entirely offline and container-native.",
-  "generated_at": "2026-10-20T18:54:02.962468+00:00",
+  "security_disclaimer": "SHA-256 checksums provide tamper-detection and integrity verification against accidental modification or corruption. Because this manifest is an unsigned JSON document stored on disk without asymmetric digital signatures (such as Ed25519 or GPG) or PKI backing, it is not immutable and SHA-256 alone does not authenticate the manifest against an attacker with filesystem write access.",
+  "mlflow_evaluation": "MLflow was evaluated as an artifact tracking option. For this self-contained NASA C-MAPSS benchmark research prototype, introducing MLflow would add heavy dependencies (sqlite/psycopg2, alembic, greenlet, sqlalchemy, cloudpickle, databricks-sdk), a separate tracking server, and container bloat without runtime benefit. A structured JSON manifest with SHA-256 checksums provides deterministic, zero-overhead artifact integrity verification and provenance tracking for offline and container-native execution. Note: As an unsigned manifest, SHA-256 checksums provide tamper-evidence against accidental corruption, but do not provide cryptographic authentication or immutability against an adversary with filesystem write access (which requires external digital signatures).",
+  "generated_at": "2026-10-21T06:54:31.822899+00:00",
   "git_commit_baseline": "e99b497"
 }

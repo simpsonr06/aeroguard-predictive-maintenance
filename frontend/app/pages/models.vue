@@ -388,10 +388,10 @@ const narrativeText = computed(() => {
               <UIcon name="i-lucide-git-branch" class="size-4 text-teal-400" />
               <div>
                 <h3 class="text-sm font-semibold text-slate-100">
-                  Cryptographic Model Lineage & Provenance Manifest
+                  Model Lineage & Integrity Verification Manifest
                 </h3>
                 <p class="text-xs text-slate-400">
-                  Artifact SHA-256 validation &bull; Manifest Version <span class="font-mono text-teal-300">{{ lineageData.manifest_version }}</span>
+                  Tamper-evident SHA-256 checksums &bull; Manifest Version <span class="font-mono text-teal-300">{{ lineageData.manifest_version }}</span>
                 </p>
               </div>
             </div>
@@ -400,16 +400,16 @@ const narrativeText = computed(() => {
         </template>
 
         <div class="space-y-4 text-xs">
-          <!-- MLflow Trade-off Evaluation Callout -->
+          <!-- Architecture Trade-off Callout -->
           <div class="p-3 rounded bg-slate-950/80 border border-slate-800 text-slate-300 leading-relaxed">
-            <span class="font-semibold text-teal-300 block mb-1">Architecture Decision — Offline Cryptographic Manifest vs MLflow:</span>
+            <span class="font-semibold text-teal-300 block mb-1">Architecture Decision — Offline Verification Manifest vs MLflow:</span>
             {{ lineageData.mlflow_evaluation }}
           </div>
 
           <!-- Artifact Hashes Grid -->
           <div>
             <span class="font-semibold text-slate-200 block mb-2 uppercase text-[11px] tracking-wider">
-              Immutable Artifact Cryptographic Hashes (SHA-256)
+              Artifact Integrity Checksums (SHA-256)
             </span>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-[11px]">
               <div v-for="(hash, name) in lineageData.artifacts_sha256" :key="name" class="p-2 rounded bg-slate-950 border border-slate-800/80">

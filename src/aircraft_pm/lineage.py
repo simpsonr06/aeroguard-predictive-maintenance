@@ -57,6 +57,37 @@ def generate_lineage_manifest(output_path: Optional[Path] = None) -> Dict[str, A
         "RUL_FD001": compute_file_sha256(RUL_FILE),
     }
 
+    # Extract official test metrics for champion model from registry if available
+    hgb_test = registry_data.get("official_test", {}).get("HistGradientBoosting", {})
+    cv_hgb = registry_data.get("cross_validation", {}).get("HistGradientBoosting", {}).get("full_trajectory", {})
+
+    evaluation_protocols = {
+        "raw_unclipped_official_test": {
+            "protocol_name": "Raw Unclipped Official Test Labels",
+            "target_definition": "Unmodified RUL_FD001.txt ground truth at final observed cycle",
+            "clip_threshold_cycles": None,
+            "description": "Standard NASA PHM 2008 competition benchmark on 100 held-out test engines at final observed cycle.",
+            "rmse": hgb_test.get("test_rmse_official", 13.9044),
+            "mae": hgb_test.get("test_mae_official", 10.4044),
+            "r2": hgb_test.get("test_r2_official", 0.8880),
+            "nasa_score_total": hgb_test.get("test_nasa_score_official", 301.97),
+            "nasa_score_per_engine": hgb_test.get("test_nasa_score_official_per_engine", 3.02),
+            "test_engines_count": 100,
+        },
+        "clipped_125_ground_truth": {
+            "protocol_name": "Ground-Truth Labels Clipped at 125 Cycles",
+            "target_definition": "Piecewise linear ground truth min(RUL, 125) at final observed cycle",
+            "clip_threshold_cycles": 125,
+            "description": "Prognostic evaluation aligned with training target policy min(RUL, 125) on 100 held-out test engines at final observed cycle.",
+            "rmse": hgb_test.get("test_rmse_clipped", 13.0082),
+            "mae": hgb_test.get("test_mae_clipped", 9.3344),
+            "r2": hgb_test.get("test_r2_clipped", 0.8946),
+            "nasa_score_total": hgb_test.get("test_nasa_score_clipped", 280.35),
+            "nasa_score_per_engine": hgb_test.get("test_nasa_score_clipped_per_engine", 2.80),
+            "test_engines_count": 100,
+        },
+    }
+
     manifest: Dict[str, Any] = {
         "manifest_version": "2.1.0",
         "model_id": "histgradientboosting-fd001-v2.1",
@@ -85,25 +116,41 @@ def generate_lineage_manifest(output_path: Optional[Path] = None) -> Dict[str, A
             "pruned_invariant_sensors_count": 7,
             "total_engineered_features": 122,
         },
+        "evaluation_protocols": evaluation_protocols,
         "evaluation_regimes": {
-            "official_test_rmse": 13.01,
-            "official_test_mae": 10.40,
-            "official_test_r2": 0.888,
-            "official_nasa_score_total": 302.0,
-            "official_nasa_score_per_engine": 3.02,
-            "cross_validation_rmse_mean": 16.20,
+            "raw_unclipped_official_test_rmse": hgb_test.get("test_rmse_official", 13.9044),
+            "raw_unclipped_official_test_mae": hgb_test.get("test_mae_official", 10.4044),
+            "raw_unclipped_official_test_r2": hgb_test.get("test_r2_official", 0.8880),
+            "raw_unclipped_official_nasa_score_total": hgb_test.get("test_nasa_score_official", 301.97),
+            "raw_unclipped_official_nasa_score_per_engine": hgb_test.get("test_nasa_score_official_per_engine", 3.02),
+            "clipped_125_test_rmse": hgb_test.get("test_rmse_clipped", 13.0082),
+            "clipped_125_test_mae": hgb_test.get("test_mae_clipped", 9.3344),
+            "clipped_125_test_r2": hgb_test.get("test_r2_clipped", 0.8946),
+            "clipped_125_nasa_score_total": hgb_test.get("test_nasa_score_clipped", 280.35),
+            "clipped_125_nasa_score_per_engine": hgb_test.get("test_nasa_score_clipped_per_engine", 2.80),
+            "cross_validation_rmse_mean": round(cv_hgb.get("rmse_mean", 13.76), 2),
             "test_engines_count": 100,
             "train_engines_count": 100,
         },
         "artifacts_sha256": artifacts_sha256,
         "datasets_sha256": datasets_sha256,
+        "security_disclaimer": (
+            "SHA-256 checksums provide tamper-detection and integrity verification against "
+            "accidental modification or corruption. Because this manifest is an unsigned JSON document "
+            "stored on disk without asymmetric digital signatures (such as Ed25519 or GPG) or PKI backing, "
+            "it is not immutable and SHA-256 alone does not authenticate the manifest against an attacker "
+            "with filesystem write access."
+        ),
         "mlflow_evaluation": (
             "MLflow was evaluated as an artifact tracking option. For this self-contained NASA "
             "C-MAPSS benchmark research prototype, introducing MLflow would add heavy dependencies "
             "(sqlite/psycopg2, alembic, greenlet, sqlalchemy, cloudpickle, databricks-sdk), a "
-            "separate tracking server, and container bloat without runtime benefit. An immutable, "
-            "cryptographic JSON manifest with SHA-256 checksums provides 100% auditable, deterministic, "
-            "zero-overhead lineage that runs entirely offline and container-native."
+            "separate tracking server, and container bloat without runtime benefit. A structured "
+            "JSON manifest with SHA-256 checksums provides deterministic, zero-overhead artifact "
+            "integrity verification and provenance tracking for offline and container-native execution. "
+            "Note: As an unsigned manifest, SHA-256 checksums provide tamper-evidence against accidental "
+            "corruption, but do not provide cryptographic authentication or immutability against an "
+            "adversary with filesystem write access (which requires external digital signatures)."
         ),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "git_commit_baseline": "e99b497",
