@@ -75,3 +75,16 @@ DEFAULT_RANDOM_STATE: int = 42
 # Operational Health Thresholds (in cycles of RUL)
 HEALTH_CRITICAL: int = 25
 HEALTH_WARNING: int = 50
+
+# AeroSentinel Cryptographic Artifact Authentication (Ed25519)
+# Trusted production public key (safe to store in configuration).
+# Private keys must NEVER be stored in the repository, committed, or bundled.
+AEROSENTINEL_ED25519_PUBLIC_KEY: str = (
+    "2fc1416b5634cf20e6b403fafc572160b27615adbdf5352458a492d52251e45b"
+)
+# Secure production startup requires valid Ed25519 signature by default.
+# Can be toggled for dev/isolated testing via environment variable.
+import os as _os
+AEROSENTINEL_REQUIRE_AUTH: bool = _os.getenv(
+    "AEROSENTINEL_REQUIRE_AUTH", "1"
+).lower() in ("1", "true", "yes")

@@ -81,8 +81,14 @@
     "test_FD001": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851",
     "RUL_FD001": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca"
   },
-  "security_disclaimer": "SHA-256 checksums provide tamper-detection and integrity verification against accidental modification or corruption. Because this manifest is an unsigned JSON document stored on disk without asymmetric digital signatures (such as Ed25519 or GPG) or PKI backing, it is not immutable and SHA-256 alone does not authenticate the manifest against an attacker with filesystem write access.",
+  "security_disclaimer": "SHA-256 checksums provide tamper-detection and integrity verification against accidental modification or corruption. When signed with an Ed25519 private key, the manifest cryptographically authenticates model and preprocessor artifacts against unauthorized tampering. Note: The unsigned file is not immutable and SHA-256 alone does not authenticate artifacts against an attacker with local filesystem write access; asymmetric Ed25519 digital signatures enforce cryptographic authentication.",
   "mlflow_evaluation": "MLflow was evaluated as an artifact tracking option. For this self-contained NASA C-MAPSS benchmark research prototype, introducing MLflow would add heavy dependencies (sqlite/psycopg2, alembic, greenlet, sqlalchemy, cloudpickle, databricks-sdk), a separate tracking server, and container bloat without runtime benefit. A structured JSON manifest with SHA-256 checksums provides deterministic, zero-overhead artifact integrity verification and provenance tracking for offline and container-native execution. Note: As an unsigned manifest, SHA-256 checksums provide tamper-evidence against accidental corruption, but do not provide cryptographic authentication or immutability against an adversary with filesystem write access (which requires external digital signatures).",
-  "generated_at": "2026-10-21T06:54:31.822899+00:00",
-  "git_commit_baseline": "e99b497"
+  "generated_at": "2026-10-21T07:22:59.180885+00:00",
+  "git_commit_baseline": "e99b497",
+  "signature": {
+    "algorithm": "Ed25519",
+    "key_id": "aerosentinel-ed25519-v1",
+    "signature_hex": "43da7ed8c5855483d0eec070cee9e34f592c089fe707a405eb6305ff01d0328a16b31637ee21967866f73bbea1e818fa02c9865cc86142f5ca134a2565861e0a",
+    "signed_at": "2026-10-21T07:22:59.182256+00:00"
+  }
 }

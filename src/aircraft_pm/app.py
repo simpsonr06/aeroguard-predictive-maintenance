@@ -31,6 +31,7 @@ from aircraft_pm.config import (
     SENSOR_DESCRIPTIONS,
 )
 from aircraft_pm.data import load_test_data, load_train_data
+from aircraft_pm.crypto import load_verified_model_pipeline
 from aircraft_pm.features import CMAPSSPreprocessor
 from aircraft_pm.operations import (
     build_maintenance_queue,
@@ -202,15 +203,14 @@ def load_all_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict]:
 
 @st.cache_resource
 def load_production_model():
-    """Load serialized production preprocessor and model."""
-    prep_path = MODELS_DIR / "preprocessor.joblib"
-    model_path = MODELS_DIR / "best_model.joblib"
-
-    if prep_path.exists() and model_path.exists():
-        preprocessor = joblib.load(prep_path)
-        model = joblib.load(model_path)
+    """Load cryptographically verified production preprocessor and model."""
+    try:
+        preprocessor, model, _ = load_verified_model_pipeline()
         return preprocessor, model
-    return None, None
+    except Exception as e:
+        st.error(f"Security Alert: Model verification failed: {e}")
+        return None, None
+
 
 
 train_df, test_df, test_last, registry = load_all_data()

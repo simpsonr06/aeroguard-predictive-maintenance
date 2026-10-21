@@ -136,10 +136,11 @@ def generate_lineage_manifest(output_path: Optional[Path] = None) -> Dict[str, A
         "datasets_sha256": datasets_sha256,
         "security_disclaimer": (
             "SHA-256 checksums provide tamper-detection and integrity verification against "
-            "accidental modification or corruption. Because this manifest is an unsigned JSON document "
-            "stored on disk without asymmetric digital signatures (such as Ed25519 or GPG) or PKI backing, "
-            "it is not immutable and SHA-256 alone does not authenticate the manifest against an attacker "
-            "with filesystem write access."
+            "accidental modification or corruption. When signed with an Ed25519 private key, "
+            "the manifest cryptographically authenticates model and preprocessor artifacts against "
+            "unauthorized tampering. Note: The unsigned file is not immutable and SHA-256 alone does not "
+            "authenticate artifacts against an attacker with local filesystem write access; "
+            "asymmetric Ed25519 digital signatures enforce cryptographic authentication."
         ),
         "mlflow_evaluation": (
             "MLflow was evaluated as an artifact tracking option. For this self-contained NASA "

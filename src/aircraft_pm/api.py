@@ -28,6 +28,7 @@ from aircraft_pm.config import (
 from aircraft_pm.data import load_test_data, load_train_data
 from aircraft_pm.features import CMAPSSPreprocessor
 from aircraft_pm.drift import evaluate_feature_drift
+from aircraft_pm.crypto import ArtifactSecurityError, load_verified_model_pipeline
 from aircraft_pm.lineage import get_model_lineage_manifest
 from aircraft_pm.observability import ObservabilityMiddleware, metrics_collector
 from aircraft_pm.operations import (
@@ -194,15 +195,25 @@ async def lifespan(app: FastAPI):
         with open(registry_path, "r", encoding="utf-8") as f:
             app_state["model_registry"] = json.load(f)
 
-    prep_path = MODELS_DIR / "preprocessor.joblib"
-    model_path = MODELS_DIR / "best_model.joblib"
+    try:
+        preprocessor, prod_model, manifest = load_verified_model_pipeline()
+        app_state["preprocessor"] = preprocessor
+        app_state["prod_model"] = prod_model
+        app_state["manifest"] = manifest
+        app_state["auth_status"] = "AUTHENTICATED"
+    except ArtifactSecurityError as e:
+        print(f"CRITICAL: Artifact security verification failed: {e}")
+        app_state["preprocessor"] = None
+        app_state["prod_model"] = None
+        app_state["auth_status"] = f"AUTH_FAILED: {e}"
+    except Exception as e:
+        print(f"Warning: Could not load model pipeline: {e}")
+        app_state["preprocessor"] = None
+        app_state["prod_model"] = None
+        app_state["auth_status"] = f"LOAD_FAILED: {e}"
 
-    if prep_path.exists() and model_path.exists():
+    if app_state["preprocessor"] is not None and app_state["prod_model"] is not None:
         try:
-            preprocessor = joblib.load(prep_path)
-            prod_model = joblib.load(model_path)
-            app_state["preprocessor"] = preprocessor
-            app_state["prod_model"] = prod_model
 
             # Precompute test fleet predictions once for fast summary retrieval
             if app_state["test_df"] is not None and app_state["test_last"] is not None:
