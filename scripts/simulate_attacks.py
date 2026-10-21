@@ -13,8 +13,13 @@ Scientific Guardrails:
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Tuple
+
+# Ensure src is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import numpy as np
 import pandas as pd

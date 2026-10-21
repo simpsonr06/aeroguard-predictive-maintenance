@@ -8,7 +8,7 @@ Executes controlled, warm-up-isolated timing measurements separating:
 5. Causal temporal rolling feature transformation (122 features).
 6. Single-engine inference latency.
 7. Fleet-wide (100 engines) batch inference latency.
-8. Covariate drift evaluation (two-sample KS + 10-bin PSI on 14 informative channels).
+8. Covariate drift evaluation (two-sample KS + 10-bin PSI on 15 informative channels).
 
 Exports:
 - reports/research/performance_benchmarks.csv
@@ -17,11 +17,15 @@ Exports:
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import platform
 import sys
 import time
 from typing import Any, Dict, List
+
+# Ensure src is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import joblib
 import numpy as np
@@ -153,7 +157,7 @@ def run_benchmarks(n_reps: int = 100) -> List[Dict[str, Any]]:
         bench_fleet_inference()
         t_inf_fleet.append((time.perf_counter() - t0) * 1000.0)
 
-    # 8. Covariate Drift Evaluation (KS + PSI on 14 channels)
+# 8. Covariate Drift Evaluation (KS + PSI on 15 informative channels)
     def bench_drift():
         _ = evaluate_feature_drift(
             reference_df=train_df,
@@ -210,7 +214,7 @@ def run_benchmarks(n_reps: int = 100) -> List[Dict[str, Any]]:
             t_drift,
             "statistical_drift_evaluation",
             "Covariate Monitoring",
-            "Non-parametric two-sample Kolmogorov-Smirnov test and 10-bin PSI across 14 informative channels",
+            "Non-parametric two-sample Kolmogorov-Smirnov test and 10-bin PSI across 15 informative channels",
         ),
     ]
 

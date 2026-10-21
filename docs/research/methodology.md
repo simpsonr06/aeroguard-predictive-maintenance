@@ -81,7 +81,7 @@ AeroSentinel implements two continuous statistical monitors across all 14 active
 A critical scientific finding documented in this methodology is the **censoring asymmetry problem**:
 * In `train_FD001.txt`, 100% of engine records terminate at complete failure ($RUL=0$). Thus, high-degradation operational states are heavily represented.
 * In `test_FD001.txt`, engines are censored at arbitrary stages (mean terminal RUL $= 75.8$ cycles).
-* **Consequence:** Comparing clean operational test telemetry directly to the training baseline results in **8 false-positive PSI alert channels** and 6 warning channels under pristine, unattacked conditions!
+* **Consequence:** Comparing clean operational test telemetry directly to the training baseline results in **8 false-positive PSI alert channels** ($s_2, s_4, s_7, s_{11}, s_{12}, s_{15}, s_{20}, s_{21}$) and 6 warning channels ($s_3, s_8, s_9, s_{13}, s_{14}, s_{17}$) (14/15 channels flagged) under pristine, unattacked conditions!
 * **Resolution:** AeroSentinel establishes a **Dual-Baseline Architecture**:
   - *Baseline A (Training Reference):* Used for model training and offline calibration.
   - *Baseline B (Operational Test Reference):* Used for online telemetry anomaly screening to evaluate sensor manipulation without censoring-induced false alarms.

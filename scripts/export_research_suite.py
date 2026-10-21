@@ -20,6 +20,9 @@ import seaborn as sns
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+# Ensure src is on sys.path
+import os
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from aircraft_pm.attacks import (
     calculate_hazardous_prediction_rate,

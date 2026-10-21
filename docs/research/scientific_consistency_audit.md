@@ -51,9 +51,9 @@ In survival and prognostic modeling, the physical distribution of sensor reading
 * In `train_FD001.txt`, 100% of engine units run until functional breakdown ($RUL = 0$). Consequently, late-life degradation states (elevated temperatures $T_{30}, T_{50}$, depressed pressures $P_{30}, P_{s30}$) are heavily represented.
 * In `test_FD001.txt`, engines are censored at arbitrary operational points (mean terminal RUL $\approx 75.8$ cycles). Most engines are stopped while still in healthy cruise or mid-life stages.
 
-**Empirical Consequence:** When clean, uncompromised test telemetry is screened directly against the training baseline, the Two-Sample Kolmogorov-Smirnov test and Population Stability Index (PSI) yield:
-* **8 PSI Alert Channels** ($\text{PSI} \ge 0.25$): $s_4, s_7, s_{11}, s_{12}, s_{15}, s_{21}$.
-* **6 PSI Warning Channels** ($0.10 \le \text{PSI} < 0.25$): $s_2, s_3, s_8, s_9, s_{13}, s_{14}, s_{17}, s_{20}$.
+* **8 PSI Alert Channels** ($\text{PSI} \ge 0.25$): $s_2, s_4, s_7, s_{11}, s_{12}, s_{15}, s_{20}, s_{21}$.
+* **6 PSI Warning Channels** ($0.10 \le \text{PSI} < 0.25$ or KS $p < 0.01, D > 0.15$): $s_3, s_8, s_9, s_{13}, s_{14}, s_{17}$.
+* **1 Stable Channel** ($\text{PSI} < 0.10$): $s_6$ ($\text{PSI} = 0.0000$, KS $p = 0.3662$).
 * **System Status:** `drift_alert` (14 out of 15 informative channels flagged).
 
 Thus, screening operational telemetry against a run-to-failure training reference generates an unmanageable **false-positive alarm rate ($>93\%$ of channels flagged)** under clean conditions.
@@ -71,7 +71,7 @@ To resolve this without altering model training data or compromising held-out te
 Evaluating the disjoint engine partition confirms:
 * **Clean Evaluation Baseline ($\mathcal{E}_{\text{eval}}$ vs. $\mathcal{E}_{\text{cal}}$):**  
   $\text{PSI Alerts} = 0$, $\text{PSI Warnings} = 0$, $\text{Overall Status} = \mathbf{stable}$.  
-  **Empirical False Positive Rate is strictly 0.0%** across completely unseen operational engines.
+  **Zero false-positive alerts observed on the tested evaluation partition** ($\mathcal{E}_{\text{eval}}$, engines 51–100 vs. $\mathcal{E}_{\text{cal}}$, engines 1–50). This empirical result is specific to the examined partition under static C-MAPSS FD001 conditions and must not be generalized into a guaranteed 0% false-positive rate across broader in-flight airline operations.
 * **Attack Evasion Dynamics on Disjoint Engines:**
   - `scenario_1_bias_s11_pos_1sigma`: 1 alert channel ($s_{11}$), 0 warnings $\rightarrow$ **Status: `warning` (Evades fleet drift alert)**.
   - `scenario_2_bias_s11_pos_2sigma`: 1 alert channel ($s_{11}$), 0 warnings $\rightarrow$ **Status: `warning` (Evades fleet drift alert)**.
