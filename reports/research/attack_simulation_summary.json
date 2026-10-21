@@ -1,0 +1,373 @@
+{
+  "title": "AeroSentinel Phase 2 \u2014 Offline Telemetry Attack Simulation Results",
+  "benchmark_dataset": "NASA C-MAPSS FD001 (Held-out Test, 100 engines)",
+  "model_id": "histgradientboosting-fd001-v2.1",
+  "algorithm": "HistGradientBoostingRegressor",
+  "timestamp_utc": "2026-10-21T07:46:17.870863+00:00",
+  "clean_baseline": {
+    "protocol_a_unclipped": {
+      "rmse": 13.9044,
+      "mae": 10.4044,
+      "r2": 0.888,
+      "nasa_score": 301.97,
+      "mean_bias": -0.0231,
+      "max_abs_error": 40.4623,
+      "n_samples": 100
+    },
+    "protocol_b_clipped_125": {
+      "rmse": 13.0082,
+      "mae": 9.3344,
+      "r2": 0.8946,
+      "nasa_score": 280.35,
+      "mean_bias": 1.0469,
+      "max_abs_error": 40.4623,
+      "n_samples": 100
+    },
+    "drift_baseline": {
+      "overall_status": "drift_alert",
+      "drift_detected": true
+    }
+  },
+  "scenarios": {
+    "scenario_1_bias_s11_pos_1sigma": {
+      "metadata": {
+        "id": "scenario_1_bias_s11_pos_1sigma",
+        "name": "Ps30 Static Pressure (+1.0\u03c3 Bias)",
+        "type": "step_bias",
+        "target_sensors": [
+          "sensor_11"
+        ],
+        "parameters": {
+          "sensor_11": 1.0
+        },
+        "onset_fraction": 0.6,
+        "rationale": "Moderate positive step bias on static HPC pressure, masking natural degradation drop."
+      },
+      "metrics": {
+        "scenario_id": "scenario_1_bias_s11_pos_1sigma",
+        "scenario_name": "Ps30 Static Pressure (+1.0\u03c3 Bias)",
+        "attack_type": "step_bias",
+        "onset_fraction": 0.6,
+        "target_sensors": "sensor_11",
+        "mean_delta_rul": -9.52,
+        "median_delta_rul": -7.38,
+        "std_delta_rul": 7.5,
+        "delta_rul_95ci_low": -11.029,
+        "delta_rul_95ci_high": -8.095,
+        "hazardous_prediction_rate_pct": 0.0,
+        "unclipped_rmse": 18.1647,
+        "unclipped_delta_rmse": 4.2603,
+        "unclipped_mae": 13.5201,
+        "unclipped_delta_mae": 3.1157,
+        "unclipped_nasa_total": 452.46,
+        "unclipped_delta_nasa": 150.49,
+        "unclipped_nasa_per_engine": 4.52,
+        "clipped_rmse": 16.9799,
+        "clipped_delta_rmse": 3.9717,
+        "clipped_mae": 12.4501,
+        "clipped_delta_mae": 3.1157,
+        "clipped_nasa_total": 403.62,
+        "clipped_delta_nasa": 123.27,
+        "clipped_nasa_per_engine": 4.04,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": false,
+        "drift_status_vs_clean_test": "warning",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": true
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "warning",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    },
+    "scenario_2_bias_s11_pos_2sigma": {
+      "metadata": {
+        "id": "scenario_2_bias_s11_pos_2sigma",
+        "name": "Ps30 Static Pressure (+2.0\u03c3 Bias)",
+        "type": "step_bias",
+        "target_sensors": [
+          "sensor_11"
+        ],
+        "parameters": {
+          "sensor_11": 2.0
+        },
+        "onset_fraction": 0.6,
+        "rationale": "High positive step bias on static HPC pressure, strongly suppressing degradation signature."
+      },
+      "metrics": {
+        "scenario_id": "scenario_2_bias_s11_pos_2sigma",
+        "scenario_name": "Ps30 Static Pressure (+2.0\u03c3 Bias)",
+        "attack_type": "step_bias",
+        "onset_fraction": 0.6,
+        "target_sensors": "sensor_11",
+        "mean_delta_rul": -12.07,
+        "median_delta_rul": -11.8,
+        "std_delta_rul": 8.33,
+        "delta_rul_95ci_low": -13.738,
+        "delta_rul_95ci_high": -10.459,
+        "hazardous_prediction_rate_pct": 0.0,
+        "unclipped_rmse": 20.4374,
+        "unclipped_delta_rmse": 6.533,
+        "unclipped_mae": 15.5462,
+        "unclipped_delta_mae": 5.1418,
+        "unclipped_nasa_total": 577.97,
+        "unclipped_delta_nasa": 276.0,
+        "unclipped_nasa_per_engine": 5.78,
+        "clipped_rmse": 19.019,
+        "clipped_delta_rmse": 6.0108,
+        "clipped_mae": 14.4762,
+        "clipped_delta_mae": 5.1418,
+        "clipped_nasa_total": 501.34,
+        "clipped_delta_nasa": 220.99,
+        "clipped_nasa_per_engine": 5.01,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": false,
+        "drift_status_vs_clean_test": "warning",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": true
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "warning",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    },
+    "scenario_3_bias_s11_neg_1sigma": {
+      "metadata": {
+        "id": "scenario_3_bias_s11_neg_1sigma",
+        "name": "Ps30 Static Pressure (-1.0\u03c3 Bias)",
+        "type": "step_bias",
+        "target_sensors": [
+          "sensor_11"
+        ],
+        "parameters": {
+          "sensor_11": -1.0
+        },
+        "onset_fraction": 0.6,
+        "rationale": "Negative step bias artificially accelerating apparent wear (inducing early false maintenance)."
+      },
+      "metrics": {
+        "scenario_id": "scenario_3_bias_s11_neg_1sigma",
+        "scenario_name": "Ps30 Static Pressure (-1.0\u03c3 Bias)",
+        "attack_type": "step_bias",
+        "onset_fraction": 0.6,
+        "target_sensors": "sensor_11",
+        "mean_delta_rul": 5.16,
+        "median_delta_rul": 4.04,
+        "std_delta_rul": 5.34,
+        "delta_rul_95ci_low": 4.193,
+        "delta_rul_95ci_high": 6.302,
+        "hazardous_prediction_rate_pct": 5.3,
+        "unclipped_rmse": 15.7392,
+        "unclipped_delta_rmse": 1.8348,
+        "unclipped_mae": 12.3014,
+        "unclipped_delta_mae": 1.897,
+        "unclipped_nasa_total": 433.13,
+        "unclipped_delta_nasa": 131.16,
+        "unclipped_nasa_per_engine": 4.33,
+        "clipped_rmse": 15.0072,
+        "clipped_delta_rmse": 1.999,
+        "clipped_mae": 11.2314,
+        "clipped_delta_mae": 1.897,
+        "clipped_nasa_total": 412.96,
+        "clipped_delta_nasa": 132.61,
+        "clipped_nasa_per_engine": 4.13,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": false,
+        "drift_status_vs_clean_test": "warning",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": true
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "warning",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    },
+    "scenario_4_ramp_s11_pos_2sigma": {
+      "metadata": {
+        "id": "scenario_4_ramp_s11_pos_2sigma",
+        "name": "Ps30 Static Pressure (Creeping +2.0\u03c3 Ramp)",
+        "type": "gradual_ramp",
+        "target_sensors": [
+          "sensor_11"
+        ],
+        "parameters": {
+          "sensor_11": 2.0
+        },
+        "onset_fraction": 0.5,
+        "rationale": "Gradual linear drift accumulating from cycle 50% to terminal cycle."
+      },
+      "metrics": {
+        "scenario_id": "scenario_4_ramp_s11_pos_2sigma",
+        "scenario_name": "Ps30 Static Pressure (Creeping +2.0\u03c3 Ramp)",
+        "attack_type": "gradual_ramp",
+        "onset_fraction": 0.5,
+        "target_sensors": "sensor_11",
+        "mean_delta_rul": -11.74,
+        "median_delta_rul": -11.12,
+        "std_delta_rul": 8.2,
+        "delta_rul_95ci_low": -13.367,
+        "delta_rul_95ci_high": -10.127,
+        "hazardous_prediction_rate_pct": 0.0,
+        "unclipped_rmse": 20.1812,
+        "unclipped_delta_rmse": 6.2768,
+        "unclipped_mae": 15.3778,
+        "unclipped_delta_mae": 4.9734,
+        "unclipped_nasa_total": 564.54,
+        "unclipped_delta_nasa": 262.57,
+        "unclipped_nasa_per_engine": 5.65,
+        "clipped_rmse": 18.7846,
+        "clipped_delta_rmse": 5.7764,
+        "clipped_mae": 14.3078,
+        "clipped_delta_mae": 4.9734,
+        "clipped_nasa_total": 492.15,
+        "clipped_delta_nasa": 211.8,
+        "clipped_nasa_per_engine": 4.92,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": false,
+        "drift_status_vs_clean_test": "stable",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": true
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "stable",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    },
+    "scenario_5_multisensor_bias": {
+      "metadata": {
+        "id": "scenario_5_multisensor_bias",
+        "name": "Coordinated Multi-Sensor (+1.0\u03c3 Bias on S11, S9, S4)",
+        "type": "step_bias",
+        "target_sensors": [
+          "sensor_11",
+          "sensor_9",
+          "sensor_4"
+        ],
+        "parameters": {
+          "sensor_11": 1.0,
+          "sensor_9": 1.0,
+          "sensor_4": 1.0
+        },
+        "onset_fraction": 0.6,
+        "rationale": "Coordinated positive perturbation across the top three prognostic features."
+      },
+      "metrics": {
+        "scenario_id": "scenario_5_multisensor_bias",
+        "scenario_name": "Coordinated Multi-Sensor (+1.0\u03c3 Bias on S11, S9, S4)",
+        "attack_type": "step_bias",
+        "onset_fraction": 0.6,
+        "target_sensors": "sensor_11,sensor_9,sensor_4",
+        "mean_delta_rul": -21.55,
+        "median_delta_rul": -22.98,
+        "std_delta_rul": 13.68,
+        "delta_rul_95ci_low": -24.316,
+        "delta_rul_95ci_high": -18.823,
+        "hazardous_prediction_rate_pct": 0.0,
+        "unclipped_rmse": 28.5856,
+        "unclipped_delta_rmse": 14.6812,
+        "unclipped_mae": 21.8959,
+        "unclipped_delta_mae": 11.4915,
+        "unclipped_nasa_total": 1673.13,
+        "unclipped_delta_nasa": 1371.16,
+        "unclipped_nasa_per_engine": 16.73,
+        "clipped_rmse": 27.0119,
+        "clipped_delta_rmse": 14.0037,
+        "clipped_mae": 20.8259,
+        "clipped_delta_mae": 11.4915,
+        "clipped_nasa_total": 1410.63,
+        "clipped_delta_nasa": 1130.28,
+        "clipped_nasa_per_engine": 14.11,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": true,
+        "drift_status_vs_clean_test": "drift_alert",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": false
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "drift_alert",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    },
+    "scenario_6_frozen_replay": {
+      "metadata": {
+        "id": "scenario_6_frozen_replay",
+        "name": "Frozen Nominal Cruise Replay (All Informative Sensors)",
+        "type": "frozen_replay",
+        "target_sensors": [
+          "sensor_2",
+          "sensor_3",
+          "sensor_4",
+          "sensor_6",
+          "sensor_7",
+          "sensor_8",
+          "sensor_9",
+          "sensor_11",
+          "sensor_12",
+          "sensor_13",
+          "sensor_14",
+          "sensor_15",
+          "sensor_17",
+          "sensor_20",
+          "sensor_21"
+        ],
+        "parameters": {},
+        "onset_fraction": 0.4,
+        "rationale": "Freezes all 14 sensors at cycle 40% (holding early-life cruise values to end of flight)."
+      },
+      "metrics": {
+        "scenario_id": "scenario_6_frozen_replay",
+        "scenario_name": "Frozen Nominal Cruise Replay (All Informative Sensors)",
+        "attack_type": "frozen_replay",
+        "onset_fraction": 0.4,
+        "target_sensors": "sensor_2,sensor_3,sensor_4,sensor_6,sensor_7,sensor_8,sensor_9,sensor_11,sensor_12,sensor_13,sensor_14,sensor_15,sensor_17,sensor_20,sensor_21",
+        "mean_delta_rul": 42.16,
+        "median_delta_rul": 32.09,
+        "std_delta_rul": 38.08,
+        "delta_rul_95ci_low": 35.005,
+        "delta_rul_95ci_high": 49.63,
+        "hazardous_prediction_rate_pct": 100.0,
+        "unclipped_rmse": 58.3342,
+        "unclipped_delta_rmse": 44.4298,
+        "unclipped_mae": 45.9051,
+        "unclipped_delta_mae": 35.5007,
+        "unclipped_nasa_total": 791878.67,
+        "unclipped_delta_nasa": 791576.7,
+        "unclipped_nasa_per_engine": 7918.79,
+        "clipped_rmse": 58.0926,
+        "clipped_delta_rmse": 45.0844,
+        "clipped_mae": 44.8351,
+        "clipped_delta_mae": 35.5007,
+        "clipped_nasa_total": 791848.78,
+        "clipped_delta_nasa": 791568.43,
+        "clipped_nasa_per_engine": 7918.49,
+        "drift_alert_vs_train": true,
+        "drift_alert_vs_clean_test": true,
+        "drift_status_vs_clean_test": "drift_alert",
+        "psi_drift_count_vs_clean": 0,
+        "psi_warn_count_vs_clean": 0,
+        "evades_operational_drift_detector": false
+      },
+      "drift_vs_train_status": "drift_alert",
+      "drift_vs_clean_test_status": "drift_alert",
+      "flagged_features_vs_clean": {
+        "psi_drift": [],
+        "psi_warning": []
+      }
+    }
+  }
+}
