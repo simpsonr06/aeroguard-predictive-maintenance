@@ -572,7 +572,7 @@ def create_manuscript():
     set_section_cols(s_body6, 2)
 
     add_subsec_heading("D. Computational Overhead & Latency Benchmarks")
-    add_p("Microbenchmarks across N=100 independent trials confirm that pure Ed25519 signature verification requires only 0.13 ± 0.02 ms (median 0.11 ms), contributing less than 0.6% of the total 24.37 ms verified startup latency. Fleet batch inference for 100 engines executes in 1.34 ms (13.4 µs/engine), and full 15-sensor drift screening executes in 100.73 ms. Across independent benchmarking iterations (initial profiling in Fig. 5 vs Table V vs companion re-benchmark in performance_benchmarks.csv), component measurements vary by up to 19.2% for Ed25519 and 11.9% for deserialization (composite startup varying by 5.6%), with sub-millisecond cryptographic overhead confirmed across all trials.")
+    add_p("Microbenchmarks across N=100 independent trials confirm that pure Ed25519 signature verification requires only 0.13 ± 0.02 ms (median 0.11 ms), contributing less than 0.6% of the total 24.37 ms verified startup latency. Fleet batch inference for 100 engines executes in 1.34 ms (13.4 µs/engine), and full 15-sensor drift screening executes in 100.73 ms. To interpret these measurements across operational contexts, four latency regimes are distinguished: (1) Artifact-Loading Overhead: A one-time startup initialization cost (Table V reports 24.37 ms composite mean from N=100 trials; isolated component means sum to 24.53 ms, within 0.16 ms of composite timing). Across distinct benchmark records, measurements reflect the specific evaluation context: the initial profiling run plotted in Fig. 5 (0.11 ms Ed25519, 15.34 ms SHA-256, 9.56 ms deserialization; summing to 25.01 ms); Table V multi-trial benchmarks (0.13 ms Ed25519, 14.93 ms SHA-256, 9.47 ms deserialization, 24.37 ms composite); and the companion multi-trial benchmark recorded in performance_benchmarks.csv (0.105 ms Ed25519, 14.04 ms SHA-256, 8.35 ms deserialization, 23.01 ms composite). Between multi-trial runs, component means differ by 19.23% for Ed25519, 5.98% for SHA-256, 11.87% for deserialization, and 5.57% for composite startup. Across all trials, Ed25519 verification remains ≤ 0.13 ms (<0.6% of startup). (2) Single-Engine Inference: 1.39 ms mean (1.16 ms median in Table V; 1.30 ms in performance_benchmarks.csv), with ~1.1 ms consumed by array validation. (3) Fleet Batch Inference: 1.34 ms mean for 100 engines (13.4 µs/engine; 1.28 ms in performance_benchmarks.csv). (4) Drift Screening: 100.73 ms across 13,096 cycles (93.99 ms in performance_benchmarks.csv).")
 
     # Table V & Figure 5: Full-width break
     s_t5 = doc.add_section(WD_SECTION_START.CONTINUOUS)
@@ -628,7 +628,7 @@ def create_manuscript():
     r.font.size = Pt(8.5)
     r.font.bold = True
 
-    add_figure_image(FIGURES_DIR / "fig5_latency_breakdown.png", "Fig. 5. Computational latency breakdown across pipeline stages (N = 100 repetitions; component values illustrate the initial profiling run, while Table V reports the multi-trial benchmark distribution; across all runs, signature overhead remains under 0.15 ms, <0.6% of startup).")
+    add_figure_image(FIGURES_DIR / "fig5_latency_breakdown.png", "Fig. 5. Computational latency breakdown of verified pipeline startup stages. Bar labels display the initial profiling run (0.11 ms Ed25519, 15.34 ms SHA-256, 9.56 ms deserialization; summing to 25.01 ms), while Table V reports the multi-trial benchmark distribution (N = 100, 24.37 ms composite mean, 0.13 ms Ed25519); across all evaluations, cryptographic overhead remains under 0.15 ms (<0.6% of startup).")
 
     # Back to two columns for Discussion, Conclusion, Declarations, References
     s_body7 = doc.add_section(WD_SECTION_START.CONTINUOUS)
@@ -649,7 +649,7 @@ def create_manuscript():
 
     # Declarations
     add_sec_heading("DECLARATIONS & ACKNOWLEDGMENTS")
-    add_p("The authors express gratitude to the NASA Ames Prognostics Center of Excellence. No external commercial funding was received. All reproducible artifacts, scripts, and cryptographic keys are available in the AeroSentinel repository.")
+    add_p("The authors express gratitude to the NASA Ames Prognostics Center of Excellence. No external commercial funding was received. All reproducible artifacts, evaluation manifests, cryptographic public verification keys, and benchmark generation tools are accessible in the AeroSentinel repository; private signing keys are strictly quarantined offline.")
 
     # References
     add_sec_heading("REFERENCES")

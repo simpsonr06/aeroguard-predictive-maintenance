@@ -300,21 +300,22 @@ Fleet Batch Inference (100x122)          1.34      0.32         1.17      2.11
 ```
 
 Crucially, **pure Ed25519 signature verification requires only $0.13 \pm 0.02\text{ ms}$** (median $0.11\text{ ms}$), contributing less than $0.6\%$ of the total startup latency ($24.37\text{ ms}$). To interpret these performance figures accurately across deployment scenarios, four latency regimes must be distinguished:
-1. *Artifact-Loading Overhead:* A one-time initialization cost ($24.37\text{ ms}$ composite mean, $23.90\text{ ms}$ median) incurred during process startup or model hot-reload. The composite timing encompasses reading and parsing `model_manifest.json` from storage, Ed25519 signature verification ($0.13\text{ ms}$ mean, $0.11\text{ ms}$ median), SHA-256 digest computation across the five declared dependency artifacts ($14.93\text{ ms}$ mean, $14.77\text{ ms}$ median across 21.01 MB on disk: `best_model.joblib`, `preprocessor.joblib`, `histgradientboosting.joblib`, `random_forest.joblib`, and `model_registry.json`), and joblib deserialization of the active production model and preprocessor ($9.47\text{ ms}$ mean, $8.65\text{ ms}$ median). Isolated component timings sum to $24.53\text{ ms}$; the slight variance with composite measurement ($<0.7\%$) reflects separate execution loops and manifest disk-parsing orchestration rather than runtime non-determinism. Across independent benchmarking iterations (e.g., initial profiling plotted in Fig. 5 with 0.11 ms Ed25519, 15.34 ms SHA-256, 9.56 ms deserialization; Table V with 24.37 ms composite mean; and a companion re-benchmark recorded in `performance_benchmarks.csv` with 0.105 ms Ed25519, 14.04 ms SHA-256, 8.35 ms deserialization, 23.01 ms composite mean), individual component measurements vary by up to 19.2% for Ed25519 and 11.9% for deserialization, while composite startup varies by 5.6%. In all recorded trials, pure Ed25519 verification consistently executes in $\le 0.13\text{ ms}$, confirming that asymmetric cryptographic signing contributes negligible overhead ($<0.6\%$) relative to physical disk I/O and deserialization.
-2. *Single-Request Inference Latency:* Evaluating an individual engine ($1 \times 122$ feature vector) requires $1.39\text{ ms}$ mean ($1.16\text{ ms}$ median). Profiling indicates that $\approx 1.1\text{ ms}$ is consumed by Scikit-learn array validation (`check_array`) and Python-to-C wrapper dispatch.
-3. *Fleet Batch Inference Latency:* Evaluating an entire 100-engine fleet ($100 \times 122$ matrix) in a single invocation executes in $1.34\text{ ms}$ mean ($1.17\text{ ms}$ median). Because tree traversals execute across a contiguous NumPy buffer in compiled C routines, batch dispatch amortizes the fixed invocation overhead to **$13.4\ \mu\text{s}$ per engine**.
-4. *Covariate Drift Screening Overhead:* Periodic multi-sensor drift detection (KS tests and 10-bin PSI across all 15 active channels) requires $100.73\text{ ms}$ across 13,096 operational cycles, well suited for post-flight background batch execution. Fig. 5 illustrates the execution latency profile.
+1. *Artifact-Loading Overhead:* A one-time initialization cost ($24.37\text{ ms}$ composite mean, $23.90\text{ ms}$ median) incurred during process startup or model hot-reload. The composite timing encompasses reading and parsing `model_manifest.json` from storage, Ed25519 signature verification ($0.13\text{ ms}$ mean, $0.11\text{ ms}$ median), SHA-256 digest computation across the five declared dependency artifacts ($14.93\text{ ms}$ mean, $14.77\text{ ms}$ median across 21.01 MB on disk: `best_model.joblib`, `preprocessor.joblib`, `histgradientboosting.joblib`, `random_forest.joblib`, and `model_registry.json`), and joblib deserialization of the active production model and preprocessor ($9.47\text{ ms}$ mean, $8.65\text{ ms}$ median). Summing the isolated component means yields $24.53\text{ ms}$, within $0.16\text{ ms}$ ($0.66\%$) of the composite measurement. Across distinct benchmarking records, measurements reflect the specific evaluation context: an initial profiling run plotted in Fig. 5 (0.11 ms Ed25519, 15.34 ms SHA-256, 9.56 ms deserialization; summing to 25.01 ms); the primary multi-trial benchmark reported in Table V ($N=100$, 24.37 ms composite mean, 0.13 ms Ed25519); and a companion multi-trial benchmark recorded in `reports/research/performance_benchmarks.csv` ($N=100$, 23.01 ms composite mean, 0.105 ms Ed25519, 14.04 ms SHA-256, 8.35 ms deserialization). Between the multi-trial benchmark runs, component means differ by 19.23% for Ed25519 (0.130 ms vs. 0.105 ms), 5.98% for SHA-256 (14.93 ms vs. 14.04 ms), 11.87% for deserialization (9.47 ms vs. 8.35 ms), and 5.57% for composite startup (24.37 ms vs. 23.01 ms). In all recorded trials, pure Ed25519 verification consistently executes in $\le 0.13\text{ ms}$, confirming that asymmetric cryptographic signing contributes negligible overhead ($<0.6\%$) relative to physical disk I/O and deserialization.
+2. *Single-Request Inference Latency:* Evaluating an individual engine ($1 \times 122$ feature vector) requires $1.39\text{ ms}$ mean ($1.16\text{ ms}$ median in Table V; $1.30\text{ ms}$ mean, $1.12\text{ ms}$ median in `performance_benchmarks.csv`). Profiling indicates that $\approx 1.1\text{ ms}$ is consumed by Scikit-learn array validation (`check_array`) and Python-to-C wrapper dispatch.
+3. *Fleet Batch Inference Latency:* Evaluating an entire 100-engine fleet ($100 \times 122$ matrix) in a single invocation executes in $1.34\text{ ms}$ mean ($1.17\text{ ms}$ median in Table V; $1.28\text{ ms}$ mean, $1.13\text{ ms}$ median in `performance_benchmarks.csv`). Because tree traversals execute across a contiguous NumPy buffer in compiled C routines, batch dispatch amortizes the fixed invocation overhead to **$13.4\ \mu\text{s}$ per engine** ($12.8\ \mu\text{s}$ in the companion benchmark).
+4. *Covariate Drift Screening Overhead:* Periodic multi-sensor drift detection (KS tests and 10-bin PSI across all 15 active channels) requires $100.73\text{ ms}$ mean ($93.99\text{ ms}$ in the companion benchmark) across 13,096 operational cycles, well suited for post-flight background batch execution. Fig. 5 illustrates the startup latency profile.
 
 ```
 +-----------------------------------------------------------------------+
-|  [Figure 5: Computational Latency Breakdown Across Pipeline Stages]   |
-|  Latency breakdown illustrating sub-millisecond Ed25519 verification  |
-|  alongside physical SHA-256 disk hashing, model deserialization,      |
-|  batch inference, and drift screening. Component values illustrate the |
-|  initial profiling run (summing to 25.01 ms composite), while Table V  |
-|  reports the multi-trial microbenchmark distribution (24.37 ms mean); |
-|  across all runs, signature overhead remains under 0.15 ms (<0.6% of  |
-|  startup).                                                            |
+|  [Figure 5: Computational Latency Breakdown of Verified Startup]      |
+|  Verified startup latency breakdown across the three initialization   |
+|  stages: sub-millisecond Ed25519 signature verification, multi-file   |
+|  SHA-256 disk hashing, and model deserialization. Bar values display  |
+|  the initial profiling run (0.11 ms, 15.34 ms, 9.56 ms, summing to   |
+|  25.01 ms), while Table V reports the multi-trial benchmark           |
+|  distribution (N = 100, 24.37 ms composite mean, 0.13 ms Ed25519);    |
+|  across all evaluations, cryptographic signing overhead remains under |
+|  0.15 ms (<0.6% of startup).                                          |
 |  Source: reports/research/figures/fig5_latency_breakdown.png          |
 +-----------------------------------------------------------------------+
 ```
@@ -351,7 +352,7 @@ The authors express gratitude to the NASA Ames Prognostics Center of Excellence 
 ### Declarations
 * **Funding:** No external commercial grant or corporate sponsorship was received for this investigation.
 * **Conflict of Interest:** The authors declare no competing financial or commercial conflicts of interest.
-* **Data Availability:** All experimental scripts, evaluation manifests, cryptographic public keys, and benchmark generation tools are accessible within the AeroSentinel research repository for scientific verification.
+* **Data Availability:** All experimental scripts, evaluation manifests, cryptographic public verification keys, and benchmark generation tools are accessible within the AeroSentinel research repository for scientific verification; private signing keys are strictly quarantined offline.
 
 ---
 
