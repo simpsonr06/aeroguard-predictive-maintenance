@@ -368,7 +368,7 @@ def create_manuscript():
     add_p("System status aggregation rules: 'stable' (0 alerts, <=2 warnings); 'warning' (1 alert, or 3-4 warnings); 'drift_alert' (>=2 alerts, or >=5 total warnings/alerts).")
 
     add_subsec_heading("F. Synthetic Attack Scenarios")
-    add_p("Six deterministic attack scenarios target sensor s11 (HPC static pressure, highest feature importance): sc1 (Step Bias +1.0σ), sc2 (Step Bias +2.0σ), sc3 (Negative Bias -1.0σ), sc4 (Creeping Linear Ramp +2.0σ), sc5 (Multi-Sensor Bias +1.0σ on s11, s9, s4), and sc6 (Frozen Replay at cycle 40%).")
+    add_p("Six deterministic attack scenarios target sensor s11 (HPC static pressure, highest feature importance): sc1 (Step Bias +1.0σ), sc2 (Step Bias +2.0σ), sc3 (Negative Bias -1.0σ), sc4 (Creeping Linear Ramp +2.0σ), sc5 (Multi-Sensor Bias +1.0σ on s11, s9, s4), and sc6 (Frozen Replay at cycle 40%). Perturbation scales sigma(s_j) are calibrated strictly from the uncorrupted training baseline (train_FD001.txt) to preserve operational realism and ensure zero data leakage from evaluation trajectories.")
 
     # Section V
     add_sec_heading("V. EXPERIMENTAL RESULTS & ANALYSIS")
@@ -492,7 +492,7 @@ def create_manuscript():
 
     add_figure_image(FIGURES_DIR / "fig2_attack_rul_shifts.png", "Fig. 2. RUL prediction shift and error distributions across six synthetic sensor attack scenarios.")
     add_figure_image(FIGURES_DIR / "fig3_asymmetric_nasa_surge.png", "Fig. 3. Exponential surge in NASA asymmetric penalty scores under delayed prediction scenarios.")
-    add_figure_image(FIGURES_DIR / "fig4_drift_psi_heatmap.png", "Fig. 4. Multi-channel Population Stability Index (PSI) heatmap demonstrating drift detector evasion.")
+    add_figure_image(FIGURES_DIR / "fig4_drift_psi_heatmap.png", "Fig. 4. Fleet-wide sensor distribution drift (PSI) evaluated across the full 100-engine test fleet relative to clean operational telemetry (drift_clean), illustrating detection evasion in single-sensor bias and ramp attacks. Table III reports corresponding operational detection under the disjoint 50/50 calibration/evaluation partition (drift_disjoint).")
 
     # Back to two columns
     s_body5 = doc.add_section(WD_SECTION_START.CONTINUOUS)
@@ -572,7 +572,7 @@ def create_manuscript():
     set_section_cols(s_body6, 2)
 
     add_subsec_heading("D. Computational Overhead & Latency Benchmarks")
-    add_p("Microbenchmarks across N=100 independent trials confirm that pure Ed25519 signature verification requires only 0.13 ± 0.02 ms (median 0.11 ms), contributing less than 0.6% of the total 24.37 ms verified startup latency. Fleet batch inference for 100 engines executes in 1.34 ms (13.4 µs/engine), and full 15-sensor drift screening executes in 100.73 ms.")
+    add_p("Microbenchmarks across N=100 independent trials confirm that pure Ed25519 signature verification requires only 0.13 ± 0.02 ms (median 0.11 ms), contributing less than 0.6% of the total 24.37 ms verified startup latency. Fleet batch inference for 100 engines executes in 1.34 ms (13.4 µs/engine), and full 15-sensor drift screening executes in 100.73 ms. Across independent benchmarking iterations (initial profiling in Fig. 5 vs Table V vs companion re-benchmark in performance_benchmarks.csv), component measurements vary by up to 19.2% for Ed25519 and 11.9% for deserialization (composite startup varying by 5.6%), with sub-millisecond cryptographic overhead confirmed across all trials.")
 
     # Table V & Figure 5: Full-width break
     s_t5 = doc.add_section(WD_SECTION_START.CONTINUOUS)
@@ -628,7 +628,7 @@ def create_manuscript():
     r.font.size = Pt(8.5)
     r.font.bold = True
 
-    add_figure_image(FIGURES_DIR / "fig5_latency_breakdown.png", "Fig. 5. Computational latency breakdown across pipeline stages (N = 100 repetitions).")
+    add_figure_image(FIGURES_DIR / "fig5_latency_breakdown.png", "Fig. 5. Computational latency breakdown across pipeline stages (N = 100 repetitions; component values illustrate the initial profiling run, while Table V reports the multi-trial benchmark distribution; across all runs, signature overhead remains under 0.15 ms, <0.6% of startup).")
 
     # Back to two columns for Discussion, Conclusion, Declarations, References
     s_body7 = doc.add_section(WD_SECTION_START.CONTINUOUS)

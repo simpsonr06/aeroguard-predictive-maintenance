@@ -165,7 +165,7 @@ To eliminate these false alarms without in-sample self-comparison dependencies, 
   - `drift_alert`: $\ge 2$ alert channels, or $\ge 5$ total alert/warning channels.
 
 ### F. Synthetic Attack Scenarios
-We formulate six synthetic attack scenarios targeting sensor $s_{11}$ (static pressure at HPC outlet, highest feature importance):
+We formulate six synthetic attack scenarios targeting sensor $s_{11}$ (static pressure at HPC outlet, highest feature importance). Perturbation scales $\sigma(s_j)$ are calibrated strictly from the uncorrupted training baseline (`train_FD001.txt`) to preserve operational realism and ensure zero data leakage from evaluation trajectories:
 * **Scenario 1 (`sc1_bias_s11_pos_1sigma`):** Additive step bias $s_{11}'(t) = s_{11}(t) + 1.0\sigma(s_{11})$ at onset cycle $t \ge 0.60 \cdot T_{\text{last}}$.
 * **Scenario 2 (`sc2_bias_s11_pos_2sigma`):** Additive step bias $s_{11}'(t) = s_{11}(t) + 2.0\sigma(s_{11})$ at onset cycle $t \ge 0.60 \cdot T_{\text{last}}$.
 * **Scenario 3 (`sc3_bias_s11_neg_1sigma`):** Negative step bias $s_{11}'(t) = s_{11}(t) - 1.0\sigma(s_{11})$ at onset cycle $t \ge 0.60 \cdot T_{\text{last}}$ (artificially masking pressure drop).
@@ -243,8 +243,12 @@ Figs. 2, 3, and 4 illustrate the RUL prediction shift distributions, exponential
 
 +-----------------------------------------------------------------------+
 |  [Figure 4: Multi-Sensor Population Stability Index (PSI) Heatmap]    |
-|  PSI divergence per sensor channel showing evasion in single-sensor   |
-|  bias and ramp attacks.                                               |
+|  Fleet-wide sensor distribution drift (PSI) evaluated across the full  |
+|  100-engine test fleet relative to clean operational telemetry         |
+|  (drift_clean), illustrating detection evasion in single-sensor bias  |
+|  and ramp attacks. Table III reports corresponding operational        |
+|  detection under the disjoint 50/50 calibration/evaluation partition  |
+|  (drift_disjoint).                                                    |
 |  Source: reports/research/figures/fig4_drift_psi_heatmap.png          |
 +-----------------------------------------------------------------------+
 ```
@@ -296,7 +300,7 @@ Fleet Batch Inference (100x122)          1.34      0.32         1.17      2.11
 ```
 
 Crucially, **pure Ed25519 signature verification requires only $0.13 \pm 0.02\text{ ms}$** (median $0.11\text{ ms}$), contributing less than $0.6\%$ of the total startup latency ($24.37\text{ ms}$). To interpret these performance figures accurately across deployment scenarios, four latency regimes must be distinguished:
-1. *Artifact-Loading Overhead:* A one-time initialization cost ($24.37\text{ ms}$ composite) incurred during process startup or model hot-reload. The composite timing encompasses reading and parsing `model_manifest.json` from storage, Ed25519 signature verification ($0.13\text{ ms}$), SHA-256 digest computation across the five declared dependency artifacts ($14.93\text{ ms}$ across 21.01 MB on disk: `best_model.joblib`, `preprocessor.joblib`, `histgradientboosting.joblib`, `random_forest.joblib`, and `model_registry.json`), and joblib deserialization of the active production model and preprocessor ($9.47\text{ ms}$). Isolated component timings sum to $24.53\text{ ms}$; the slight variance with composite measurement ($<0.7\%$) reflects separate execution loops and manifest disk-parsing orchestration rather than runtime non-determinism.
+1. *Artifact-Loading Overhead:* A one-time initialization cost ($24.37\text{ ms}$ composite mean, $23.90\text{ ms}$ median) incurred during process startup or model hot-reload. The composite timing encompasses reading and parsing `model_manifest.json` from storage, Ed25519 signature verification ($0.13\text{ ms}$ mean, $0.11\text{ ms}$ median), SHA-256 digest computation across the five declared dependency artifacts ($14.93\text{ ms}$ mean, $14.77\text{ ms}$ median across 21.01 MB on disk: `best_model.joblib`, `preprocessor.joblib`, `histgradientboosting.joblib`, `random_forest.joblib`, and `model_registry.json`), and joblib deserialization of the active production model and preprocessor ($9.47\text{ ms}$ mean, $8.65\text{ ms}$ median). Isolated component timings sum to $24.53\text{ ms}$; the slight variance with composite measurement ($<0.7\%$) reflects separate execution loops and manifest disk-parsing orchestration rather than runtime non-determinism. Across independent benchmarking iterations (e.g., initial profiling plotted in Fig. 5 with 0.11 ms Ed25519, 15.34 ms SHA-256, 9.56 ms deserialization; Table V with 24.37 ms composite mean; and a companion re-benchmark recorded in `performance_benchmarks.csv` with 0.105 ms Ed25519, 14.04 ms SHA-256, 8.35 ms deserialization, 23.01 ms composite mean), individual component measurements vary by up to 19.2% for Ed25519 and 11.9% for deserialization, while composite startup varies by 5.6%. In all recorded trials, pure Ed25519 verification consistently executes in $\le 0.13\text{ ms}$, confirming that asymmetric cryptographic signing contributes negligible overhead ($<0.6\%$) relative to physical disk I/O and deserialization.
 2. *Single-Request Inference Latency:* Evaluating an individual engine ($1 \times 122$ feature vector) requires $1.39\text{ ms}$ mean ($1.16\text{ ms}$ median). Profiling indicates that $\approx 1.1\text{ ms}$ is consumed by Scikit-learn array validation (`check_array`) and Python-to-C wrapper dispatch.
 3. *Fleet Batch Inference Latency:* Evaluating an entire 100-engine fleet ($100 \times 122$ matrix) in a single invocation executes in $1.34\text{ ms}$ mean ($1.17\text{ ms}$ median). Because tree traversals execute across a contiguous NumPy buffer in compiled C routines, batch dispatch amortizes the fixed invocation overhead to **$13.4\ \mu\text{s}$ per engine**.
 4. *Covariate Drift Screening Overhead:* Periodic multi-sensor drift detection (KS tests and 10-bin PSI across all 15 active channels) requires $100.73\text{ ms}$ across 13,096 operational cycles, well suited for post-flight background batch execution. Fig. 5 illustrates the execution latency profile.
@@ -304,8 +308,13 @@ Crucially, **pure Ed25519 signature verification requires only $0.13 \pm 0.02\te
 ```
 +-----------------------------------------------------------------------+
 |  [Figure 5: Computational Latency Breakdown Across Pipeline Stages]   |
-|  Stacked latency visualization showing sub-millisecond cryptographic   |
-|  overhead alongside deserialization, inference, and drift screening.  |
+|  Latency breakdown illustrating sub-millisecond Ed25519 verification  |
+|  alongside physical SHA-256 disk hashing, model deserialization,      |
+|  batch inference, and drift screening. Component values illustrate the |
+|  initial profiling run (summing to 25.01 ms composite), while Table V  |
+|  reports the multi-trial microbenchmark distribution (24.37 ms mean); |
+|  across all runs, signature overhead remains under 0.15 ms (<0.6% of  |
+|  startup).                                                            |
 |  Source: reports/research/figures/fig5_latency_breakdown.png          |
 +-----------------------------------------------------------------------+
 ```
